@@ -13,6 +13,7 @@ struct C03A06App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            Moment.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
