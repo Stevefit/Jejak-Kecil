@@ -25,79 +25,74 @@ struct MomentDetailView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            
-            // Carousel Image Block
-            ZStack {
-                Group {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                ZStack {
                     if let uiImage = UIImage(data: currentMoment.photo) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
+                            .frame(width: geometry.size.width, height: geometry.size.height * 0.55)
+                            .clipped()
                     } else {
                         Image(systemName: "photo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 80, height: 80)
+                            .font(.largeTitle)
                             .foregroundColor(.gray)
+                            .frame(width: geometry.size.width, height: geometry.size.height * 0.55)
+                            .background(Color(.systemGray5))
                     }
-                }
-                .frame(height: 400)
-                .frame(maxWidth: .infinity)
-                .background(Color.white)
-                .clipped()
 
-                // Overlay Arrow Indicators
-                HStack {
-                    if currentIndex > 0 {
-                        Button(action: { currentMoment = allDayMoments[currentIndex - 1] }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.black)
-                                .padding(12)
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(color: Color.black.opacity(0.1), radius: 4)
+                    HStack {
+                        if currentIndex > 0 {
+                            Button(action: { currentMoment = allDayMoments[currentIndex - 1] }) {
+                                Image(systemName: "chevron.left")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .padding(12)
+                                    .background(Color.white)
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.1), radius: 4)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        if currentIndex < allDayMoments.count - 1 {
+                            Button(action: { currentMoment = allDayMoments[currentIndex + 1] }) {
+                                Image(systemName: "chevron.right")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .padding(12)
+                                    .background(Color.white)
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.1), radius: 4)
+                            }
                         }
                     }
+                    .padding(.horizontal, 16)
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(dateText)
+                        .font(.body)
+                        .fontWeight(.bold)
+                        .italic()
+                        .foregroundColor(.black)
+
+                    Text(currentMoment.shortDescription ?? "")
+                        .font(.body)
+                        .foregroundColor(.black)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     Spacer()
-                    
-                    if currentIndex < allDayMoments.count - 1 {
-                        Button(action: { currentMoment = allDayMoments[currentIndex + 1] }) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.black)
-                                .padding(12)
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(color: Color.black.opacity(0.1), radius: 4)
-                        }
-                    }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 28)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemGray6))
             }
-
-            // Text Content Box (Fixed Alignment)
-            VStack(alignment: .leading, spacing: 12) {
-                Text(dateText)
-                    .font(.system(size: 16, weight: .bold))
-                    .italic()
-
-                Text(currentMoment.shortDescription ?? "")
-                    .font(.system(size: 16))
-                    .foregroundColor(.black)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(24) // This properly indents the text without pushing it off-screen
-            
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color(.systemGray6).ignoresSafeArea())
-        
-        // Native Navigation Bar
         .navigationTitle("Detail Momen")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -105,24 +100,18 @@ struct MomentDetailView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.subheadline)
+                        .fontWeight(.bold)
                         .foregroundColor(.black)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: Color.black.opacity(0.05), radius: 4)
                 }
             }
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: { isEditing = true }) {
                     Image(systemName: "pencil")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.subheadline)
+                        .fontWeight(.bold)
                         .foregroundColor(.black)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: Color.black.opacity(0.05), radius: 4)
                 }
             }
         }
@@ -130,23 +119,4 @@ struct MomentDetailView: View {
             EditMomentView(moment: currentMoment, isPresented: $isEditing)
         }
     }
-}
-
-#Preview {
-    let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self])
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-
-    let sampleData = UIImage(systemName: "photo")!.jpegData(compressionQuality: 0.8)!
-    let sampleMoment = Moment(
-        photo: sampleData,
-        timestamp: Date(),
-        shortDescription: "Main bikin rumah-rumahan sama Lili."
-    )
-    container.mainContext.insert(sampleMoment)
-
-    return NavigationStack {
-        MomentDetailView(allDayMoments: [sampleMoment], initialMoment: sampleMoment)
-    }
-    .modelContainer(container)
 }
