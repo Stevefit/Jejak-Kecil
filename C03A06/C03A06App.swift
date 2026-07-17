@@ -13,6 +13,11 @@ struct C03A06App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            Moment.self,
+            Reflection.self,
+            Answer.self,
+            Question.self,
+            Choice.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +30,7 @@ struct C03A06App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ReviewMomentView(modelContext: sharedModelContainer.mainContext)
         }
         .modelContainer(sharedModelContainer)
     }
