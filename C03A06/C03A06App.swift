@@ -11,9 +11,14 @@ import SwiftData
 @main
 struct C03A06App: App {
     var sharedModelContainer: ModelContainer = {
+        //model di database
         let schema = Schema([
             Item.self,
             Moment.self,
+            Reflection.self,
+            Question.self,
+            Choice.self,
+            Answer.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -27,7 +32,22 @@ struct C03A06App: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    await seedQuestionsIfNeeded()
+                }
         }
         .modelContainer(sharedModelContainer)
     }
+    
+    @MainActor
+       private func seedQuestionsIfNeeded() async {
+           let context = sharedModelContainer.mainContext
+           do {
+               try QuestionSeeder.seed(in: context)
+           } catch {
+               print("Gagal melakukan seeding Question: \(error)")
+           }
+       }
 }
+
+
