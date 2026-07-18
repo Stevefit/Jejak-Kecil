@@ -18,15 +18,19 @@ struct MomentCard: View {
         ZStack {
 
             if let uiImage = UIImage(data: moment.photo) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
+                Color.clear
+                    .overlay {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                    }
             } else {
                 Rectangle()
                     .fill(.gray.opacity(0.2))
             }
 
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay {
             RoundedRectangle(cornerRadius: 16)

@@ -7,10 +7,39 @@
 
 import Testing
 import Foundation
+import SwiftData
 @testable import C03A06
 
+@MainActor
 @Suite("Select Highlighted Moment (TEC-210)")
 struct ReflectMomentViewModelTests {
+
+    // MARK: helper
+
+    private func makeInMemoryContext() throws -> ModelContext {
+        let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        return ModelContext(container)
+    }
+
+    private func date(day: Int, hour: Int = 12) -> Date {
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 7
+        components.day = day
+        components.hour = hour
+        return Calendar.current.date(from: components)!
+    }
+
+    private func makeDummyMoment(timestamp: Date) -> Moment {
+        Moment(
+            photo: Data(),
+            timestamp: timestamp,
+            shortDescription: "Momen test",
+            category: .bermainBersama
+        )
+    }
 
     // MARK: assertion 1
     // Given belum memilih momen, ada beberapa momen
@@ -18,12 +47,25 @@ struct ReflectMomentViewModelTests {
     // Then tombol lanjut dalam keadaan nonaktif (disabled)
 
     @Test("Given belum memilih momen dan ada beberapa momen, When halaman dibuka, Then tombol lanjut nonaktif")
-    func trailingButtonDisabledWhenNoMomentSelectedYet() {
-        var state = SelectMomentState()
-        state.moments = [DummyMoment(id: "1"), DummyMoment(id: "2")]
+    func trailingButtonDisabledWhenNoMomentSelectedYet() throws {
+        let context = try makeInMemoryContext()
+        let today = date(day: 17)
 
-        #expect(state.selectedMoment == nil)
-        #expect(state.canProceed == false)
+        let moment1 = makeDummyMoment(timestamp: date(day: 17, hour: 8))
+        let moment2 = makeDummyMoment(timestamp: date(day: 17, hour: 14))
+        context.insert(moment1)
+        context.insert(moment2)
+        try context.save()
+
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+
+        // When: halaman dibuka, loadMoments dipanggil
+        viewModel.loadMoments()
+
+        // Then
+        #expect(viewModel.moments.count == 2)
+        #expect(viewModel.selectedMoment == nil)
+        #expect(viewModel.canProceedFromMomentSelection == false)
     }
 
     // MARK: assertion 2
@@ -32,16 +74,25 @@ struct ReflectMomentViewModelTests {
     // Then momen tersebut terpilih, tombol lanjut aktif (enabled)
 
     @Test("Given ada beberapa momen, When user memilih salah satu, Then momen terpilih dan tombol lanjut aktif")
-    func selectingAMomentEnablesTrailingButton() {
-        var state = SelectMomentState()
-        let momentA = DummyMoment(id: "1")
-        let momentB = DummyMoment(id: "2")
-        state.moments = [momentA, momentB]
+    func selectingAMomentEnablesTrailingButton() throws {
+        let context = try makeInMemoryContext()
+        let today = date(day: 17)
 
-        state.select(momentA)
+        let moment1 = makeDummyMoment(timestamp: date(day: 17, hour: 8))
+        let moment2 = makeDummyMoment(timestamp: date(day: 17, hour: 14))
+        context.insert(moment1)
+        context.insert(moment2)
+        try context.save()
 
-        #expect(state.selectedMoment?.id == "1")
-        #expect(state.canProceed == true)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        viewModel.loadMoments()
+
+        // When: user memilih salah satu momen
+        viewModel.select(moment1)
+
+        // Then
+        #expect(viewModel.selectedMoment?.persistentModelID == moment1.persistentModelID)
+        #expect(viewModel.canProceedFromMomentSelection == true)
     }
 
     // MARK: assertion 3
@@ -50,11 +101,18 @@ struct ReflectMomentViewModelTests {
     // Then empty state ditampilkan, tombol lanjut nonaktif
 
     @Test("Given tidak ada momen sama sekali, When halaman dibuka, Then empty state ditampilkan dan tombol lanjut nonaktif")
-    func emptyStateShownAndTrailingButtonDisabledWhenNoMoments() {
-        let state = SelectMomentState()
+    func emptyStateShownAndTrailingButtonDisabledWhenNoMoments() throws {
+        let context = try makeInMemoryContext()
+        let today = date(day: 17)
 
-        #expect(state.isEmptyState == true)
-        #expect(state.canProceed == false)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+
+        // When: halaman dibuka -> loadMoments dipanggil
+        viewModel.loadMoments()
+
+        // Then
+        #expect(viewModel.isEmptyState == true)
+        #expect(viewModel.canProceedFromMomentSelection == false)
     }
 
     // MARK: assertion 4
@@ -63,50 +121,29 @@ struct ReflectMomentViewModelTests {
     // Then halaman berpindah ke pertanyaan refleksi, momen yang dipilih tersimpan
 
     @Test("Given user sudah memilih momen, When user menekan tombol Lanjut, Then halaman berpindah ke pertanyaan dan momen tersimpan")
-    func tappingProceedMovesToQuestionStepAndKeepsSelectedMoment() {
-        var state = SelectMomentState()
-        let momentA = DummyMoment(id: "1")
-        let momentB = DummyMoment(id: "2")
-        state.moments = [momentA, momentB]
-        state.select(momentB)
+    func tappingProceedMovesToQuestionStepAndKeepsSelectedMoment() throws {
+        let context = try makeInMemoryContext()
+        let today = date(day: 17)
 
-        state.proceed()
+        let moment1 = makeDummyMoment(timestamp: date(day: 17, hour: 8))
+        let moment2 = makeDummyMoment(timestamp: date(day: 17, hour: 14))
+        context.insert(moment1)
+        context.insert(moment2)
+        try context.save()
 
-        #expect(state.step == .question)
-        #expect(state.selectedMoment?.id == "2")
-    }
-}
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        viewModel.loadMoments()
+        viewModel.select(moment2)
 
-// MARK: implementasi minimum
+        // Given: siap tekan tombol lanjut
+        #expect(viewModel.canProceedFromMomentSelection == true)
+        #expect(viewModel.step == .selectMoment)
 
-enum SelectMomentStep {
-    case selectMoment
-    case question
-}
+        // When: user menekan tombol Lanjut
+        viewModel.proceedToQuestions()
 
-struct DummyMoment: Identifiable, Equatable {
-    let id: String
-}
-
-struct SelectMomentState {
-    var moments: [DummyMoment] = []
-    var selectedMoment: DummyMoment?
-    var step: SelectMomentStep = .selectMoment
-
-    var isEmptyState: Bool {
-        moments.isEmpty
-    }
-
-    var canProceed: Bool {
-        selectedMoment != nil
-    }
-
-    mutating func select(_ moment: DummyMoment) {
-        selectedMoment = moment
-    }
-
-    mutating func proceed() {
-        guard canProceed else { return }
-        step = .question
+        // Then
+        #expect(viewModel.step == .question)
+        #expect(viewModel.selectedMoment?.persistentModelID == moment2.persistentModelID)
     }
 }

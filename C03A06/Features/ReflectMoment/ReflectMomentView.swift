@@ -7,13 +7,17 @@
 
 import SwiftUI
 import UIKit
+import SwiftData
 
 struct ReflectMomentView: View {
 
-    @State private var selectedMomentID: UUID?
-
-    let items: [MomentItem]
+    @State private var viewModel: ReflectMomentViewModel
     let onClose: () -> Void
+
+    init(modelContext: ModelContext, date: Date = .now, onClose: @escaping () -> Void) {
+        _viewModel = State(initialValue: ReflectMomentViewModel(modelContext: modelContext, date: date))
+        self.onClose = onClose
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -21,7 +25,7 @@ struct ReflectMomentView: View {
 
             Spacer()
 
-            if items.isEmpty {
+            if viewModel.isEmptyState {
                 emptyStateView
             } else {
                 momentPickerView
@@ -30,6 +34,9 @@ struct ReflectMomentView: View {
             Spacer()
         }
         .padding()
+        .task {
+            viewModel.loadMoments()
+        }
     }
 
     // MARK: header
@@ -40,8 +47,8 @@ struct ReflectMomentView: View {
             leadingIcon: "xmark",
             onLeadingTap: onClose,
             trailingIcon: "chevron.right",
-            isTrailingEnabled: selectedMomentID != nil,
-            onTrailingTap: {},
+            isTrailingEnabled: viewModel.canProceedFromMomentSelection,
+            onTrailingTap: { viewModel.proceedToQuestions() },
             progressCurrent: 1,
             progressTotal: 5
         )
@@ -76,22 +83,20 @@ struct ReflectMomentView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: spacing) {
-                    ForEach(items) { item in
+                    ForEach(viewModel.moments, id: \.persistentModelID) { moment in
                         MomentCard(
-                            moment: item.moment,
-                            isSelected: selectedMomentID == item.id
+                            moment: moment,
+                            isSelected: viewModel.selectedMoment?.persistentModelID == moment.persistentModelID
                         )
                         .frame(width: cardWidth, height: cardHeight)
                         .contentShape(RoundedRectangle(cornerRadius: 16))
-                        .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                        .scrollTransition(axis: .horizontal) { content, phase in
                             content
                                 .scaleEffect(phase.isIdentity ? 1.0 : 0.9)
                                 .opacity(phase.isIdentity ? 1 : 0.6)
                         }
                         .onTapGesture {
-                            withAnimation(.snappy(duration: 0.25)) {
-                                selectedMomentID = item.id
-                            }
+                            viewModel.select(moment)
                         }
                     }
                 }
@@ -99,11 +104,10 @@ struct ReflectMomentView: View {
                 .padding(.horizontal, sideInset)
             }
             .scrollTargetBehavior(.viewAligned)
-            .scrollPosition(id: $selectedMomentID)
         }
         .frame(height: cardHeight)
     }
-    
+
     // MARK: TEC-213: empty state
 
     private var emptyStateView: some View {
@@ -117,18 +121,6 @@ struct ReflectMomentView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: wrapper item untuk carousel (id stabil untuk ForEach/seleksi)
-
-struct MomentItem: Identifiable {
-    let id: UUID
-    let moment: Moment
-
-    init(id: UUID = UUID(), moment: Moment) {
-        self.id = id
-        self.moment = moment
     }
 }
 
@@ -147,38 +139,35 @@ private func dummyPhotoData(color: UIColor) -> Data {
 // MARK: preview TEC-211, carousel dengan beberapa moment
 
 #Preview("TEC-211: Carousel Beberapa Momen") {
-    Color(.systemGray5)
+    let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+
+    let moments = [
+        Moment(photo: dummyPhotoData(color: .systemOrange), timestamp: .now, shortDescription: "Bermain di taman", category: .bermainBersama),
+        Moment(photo: dummyPhotoData(color: .systemTeal), timestamp: .now, shortDescription: "Ngobrol sebelum tidur", category: .ngobrolDanCerita),
+        Moment(photo: dummyPhotoData(color: .systemPurple), timestamp: .now, shortDescription: "Belajar bersama", category: .belajarDanEksplorasi),
+        Moment(photo: dummyPhotoData(color: .systemPink), timestamp: .now, shortDescription: "Masak bareng", category: .berkreasiBersama)
+    ]
+    moments.forEach { container.mainContext.insert($0) }
+    try? container.mainContext.save()
+
+    return Color(.systemGray5)
         .sheet(isPresented: .constant(true)) {
-            ReflectMomentView(
-                items: [
-                    MomentItem(moment: Moment(photo: dummyPhotoData(color: .systemOrange), timestamp: .now, shortDescription: "Bermain di taman", category: .bermainBersama)),
-                    MomentItem(moment: Moment(photo: dummyPhotoData(color: .systemTeal), timestamp: .now, shortDescription: "Ngobrol sebelum tidur", category: .ngobrolDanCerita)),
-                    MomentItem(moment: Moment(photo: dummyPhotoData(color: .systemPurple), timestamp: .now, shortDescription: "Belajar bersama", category: .belajarDanEksplorasi)),
-                    MomentItem(moment: Moment(photo: dummyPhotoData(color: .systemPink), timestamp: .now, shortDescription: "Masak bareng", category: .berkreasiBersama))
-                ],
-                onClose: {}
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.hidden)
+            ReflectMomentView(modelContext: container.mainContext, onClose: {})
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
         }
+        .modelContainer(container)
 }
 
-// MARK: preview TEC-212, hanya satu moment
-
-#Preview("TEC-212: Satu Momen") {
-    ReflectMomentView(
-        items: [
-            MomentItem(moment: Moment(photo: dummyPhotoData(color: .systemOrange), timestamp: .now, shortDescription: "Bermain di taman", category: .bermainBersama))
-        ],
-        onClose: {}
-    )
-}
-
-// MARK: preview: TEC-213, empty state
+// MARK: preview TEC-213, empty state
 
 #Preview("TEC-213: Empty State") {
-    ReflectMomentView(
-        items: [],
-        onClose: {}
-    )
+    let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+
+    return ReflectMomentView(modelContext: container.mainContext, onClose: {})
+        .modelContainer(container)
 }
