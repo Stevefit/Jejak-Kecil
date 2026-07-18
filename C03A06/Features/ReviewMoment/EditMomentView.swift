@@ -8,57 +8,26 @@ struct EditMomentView: View {
 
     @State private var descriptionInput: String
     @State private var dateInput: Date
+    @State private var photoDataInput: Data?
+    
+    @State private var showActionSheet = false
+    @State private var showingImagePicker = false
+    @State private var imageSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     init(moment: Moment, isPresented: Binding<Bool>) {
         self.moment = moment
         self._isPresented = isPresented
-        self._descriptionInput = State(initialValue: moment.shortDescription ?? "")
+        self._descriptionInput = State(initialValue: moment.shortDescription)
         self._dateInput = State(initialValue: moment.timestamp)
+        self._photoDataInput = State(initialValue: moment.photo)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Button(action: { isPresented = false }) {
-                    Image(systemName: "xmark")
-                        .font(.title3)
-                        .foregroundColor(.black)
-                        .padding(12)
-                        .background(Color(.systemBackground))
-                        .clipShape(Circle())
-                }
-
-                Spacer()
-                Text("Ubah Momen")
-                    .font(.headline)
-                Spacer()
-
-                Button(action: {
-                    moment.shortDescription = descriptionInput
-                    moment.timestamp = dateInput
-                    
-                    do {
-                        try modelContext.save()
-                    } catch {
-                        print("Failed to save changes: \(error)")
-                    }
-                    isPresented = false
-                }) {
-                    Image(systemName: "checkmark")
-                        .font(.title3)
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                }
-            }
-            .padding(.horizontal)
-            .padding(.top, 20)
-            
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     Group {
-                        if let uiImage = UIImage(data: moment.photo) {
+                        if let data = photoDataInput, let uiImage = UIImage(data: data) {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .scaledToFill()
@@ -69,9 +38,14 @@ struct EditMomentView: View {
                         }
                     }
                     .frame(height: 240)
+                    .frame(maxWidth: .infinity)
                     .background(Color(.systemGray5))
                     .clipShape(RoundedRectangle(cornerRadius: 24))
                     .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                    .onTapGesture {
+                        showActionSheet = true
+                    }
                     
                     VStack(alignment: .leading, spacing: 20) {
                         VStack(alignment: .leading, spacing: 8) {
@@ -98,7 +72,45 @@ struct EditMomentView: View {
                     .padding(.horizontal, 24)
                 }
             }
+            .background(Color(.systemGray6))
+            .navigationTitle("Ubah Momen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(action: { isPresented = false }) {
+                        Image(systemName: "xmark")
+                    }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(action: {
+                        moment.shortDescription = descriptionInput
+                        moment.timestamp = dateInput
+                        if let selectedPhoto = photoDataInput {
+                            moment.photo = selectedPhoto
+                        }
+                        
+                        try? modelContext.save()
+                        isPresented = false
+                    }) {
+                        Image(systemName: "checkmark")
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
+            .confirmationDialog("Pilih Sumber Foto", isPresented: $showActionSheet, titleVisibility: .visible) {
+                Button("Kamera") {
+                    imageSourceType = .camera
+                    showingImagePicker = true
+                }
+                Button("Galeri") {
+                    imageSourceType = .photoLibrary
+                    showingImagePicker = true
+                }
+            }
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(sourceType: imageSourceType, selectedImageData: $photoDataInput)
+            }
         }
-        .background(Color(.systemGray6))
     }
 }

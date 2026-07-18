@@ -100,18 +100,12 @@ struct MomentDetailView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
                 }
             }
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: { isEditing = true }) {
                     Image(systemName: "pencil")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
                 }
             }
         }

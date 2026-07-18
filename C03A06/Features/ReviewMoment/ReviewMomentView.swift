@@ -5,6 +5,7 @@ struct ReviewMomentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ReviewMomentViewModel()
     @State private var navigateToCalendar = false
+    @State private var showingCreateMoment = false
     
     var body: some View {
         NavigationStack {
@@ -12,9 +13,6 @@ struct ReviewMomentView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     HStack(spacing: 12) {
                         Button(action: {}) {
-                            
-                            //Nanti ganti ini buat jd profile
-                            
                             ZStack {
                                 Color.orange.opacity(0.3)
                                 Image(systemName: "face.smiling.fill")
@@ -61,26 +59,11 @@ struct ReviewMomentView: View {
                             HStack(spacing: 14) {
                                 ForEach(viewModel.moments) { moment in
                                     NavigationLink(destination: MomentDetailView(allDayMoments: viewModel.moments, initialMoment: moment)) {
-                                        Group {
-                                            if let uiImage = UIImage(data: moment.photo) {
-                                                Image(uiImage: uiImage)
-                                                    .resizable()
-                                                    .scaledToFill()
-                                            } else {
-                                                ZStack {
-                                                    Color(.systemGray4)
-                                                    Image(systemName: "photo")
-                                                        .foregroundColor(.white)
-                                                }
-                                            }
-                                        }
-                                        .frame(width: 140, height: 180)
-                                        .cornerRadius(16)
-                                        .clipped()
+                                        MomentCard(moment: moment)
                                     }
                                 }
                                 
-                                Button(action: {}) {
+                                Button(action: { showingCreateMoment = true }) {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(Color(.systemGray3), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                         .overlay(
@@ -102,34 +85,38 @@ struct ReviewMomentView: View {
                             .foregroundColor(.black)
                             .padding(.horizontal)
                         
-                        VStack(spacing: 16) {
-                            Button(action: {}) {
-                                Image(systemName: "plus")
-                                    .font(.title2)
-                                    .foregroundColor(.black)
-                                    .frame(width: 64, height: 64)
-                                    .background(Color.blue.opacity(0.2))
-                                    .clipShape(Circle())
-                            }
-                            
-                            VStack(spacing: 6) {
-                                Text("Belum ada refleksi hari ini")
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.black)
+                        if let reflection = viewModel.reflection {
+                            ReflectionCard(reflection: reflection)
+                        } else {
+                            VStack(spacing: 16) {
+                                Button(action: {}) {
+                                    Image(systemName: "plus")
+                                        .font(.title2)
+                                        .foregroundColor(.black)
+                                        .frame(width: 64, height: 64)
+                                        .background(Color.blue.opacity(0.2))
+                                        .clipShape(Circle())
+                                }
                                 
-                                Text("Refleksi harianmu akan muncul di sini setelah kamu mulai mencatat momen")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 32)
+                                VStack(spacing: 6) {
+                                    Text("Belum ada refleksi hari ini")
+                                        .font(.headline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.black)
+                                    
+                                    Text("Refleksi harianmu akan muncul di sini setelah kamu mulai mencatat momen")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 32)
+                                }
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 36)
+                            .background(Color.white)
+                            .cornerRadius(24)
+                            .padding(.horizontal)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 36)
-                        .background(Color.white)
-                        .cornerRadius(24)
-                        .padding(.horizontal)
                     }
                 }
                 .padding(.vertical)
@@ -140,6 +127,11 @@ struct ReviewMomentView: View {
             }
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarHistoryView()
+            }
+            .sheet(isPresented: $showingCreateMoment, onDismiss: {
+                viewModel.fetchData(in: modelContext)
+            }) {
+                CreateMomentView()
             }
         }
     }
