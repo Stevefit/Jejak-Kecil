@@ -11,11 +11,12 @@ import SwiftData
 
 struct ReflectMomentView: View {
 
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: ReflectMomentViewModel
     let onClose: () -> Void
 
-    init(modelContext: ModelContext, date: Date = .now, onClose: @escaping () -> Void) {
-        _viewModel = State(initialValue: ReflectMomentViewModel(modelContext: modelContext, date: date))
+    init(date: Date = .now, onClose: @escaping () -> Void) {
+        _viewModel = State(initialValue: ReflectMomentViewModel(date: date))
         self.onClose = onClose
     }
 
@@ -35,7 +36,7 @@ struct ReflectMomentView: View {
         }
         .padding()
         .task {
-            viewModel.loadMoments()
+            viewModel.loadMoments(context: modelContext)
         }
     }
 
@@ -154,7 +155,7 @@ private func dummyPhotoData(color: UIColor) -> Data {
 
     return Color(.systemGray5)
         .sheet(isPresented: .constant(true)) {
-            ReflectMomentView(modelContext: container.mainContext, onClose: {})
+            ReflectMomentView(onClose: {})
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
         }
@@ -168,6 +169,6 @@ private func dummyPhotoData(color: UIColor) -> Data {
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
 
-    return ReflectMomentView(modelContext: container.mainContext, onClose: {})
+    return ReflectMomentView(onClose: {})
         .modelContainer(container)
 }

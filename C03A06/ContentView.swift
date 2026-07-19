@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var showCreateMoment = false
     @State private var showReflectMoment = false
 
@@ -32,7 +31,7 @@ struct ContentView: View {
             CreateMomentView()
         }
         .sheet(isPresented: $showReflectMoment) {
-            ReflectMomentView(modelContext: modelContext, onClose: { showReflectMoment = false })
+            ReflectMomentView(onClose: { showReflectMoment = false })
         }
     }
 }

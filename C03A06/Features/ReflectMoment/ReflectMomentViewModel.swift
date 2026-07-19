@@ -27,17 +27,17 @@ final class ReflectMomentViewModel {
     var selectedMoment: Moment?
     private(set) var isLoadingMoments: Bool = false
 
-    private let modelContext: ModelContext
     private let date: Date
 
-    init(modelContext: ModelContext, date: Date = .now) {
-        self.modelContext = modelContext
+    init(date: Date = .now) {
         self.date = date
     }
 
     // MARK: TEC-211: show all moments logged that day
+    // modelContext diterima dari View (yang mengambilnya dari @Environment),
+    // bukan disimpan lewat init.
 
-    func loadMoments() {
+    func loadMoments(context: ModelContext) {
         isLoadingMoments = true
         defer { isLoadingMoments = false }
 
@@ -56,7 +56,7 @@ final class ReflectMomentViewModel {
         )
 
         do {
-            moments = try modelContext.fetch(descriptor)
+            moments = try context.fetch(descriptor)
         } catch {
             moments = []
         }

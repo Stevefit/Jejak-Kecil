@@ -57,10 +57,10 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        let viewModel = ReflectMomentViewModel(date: today)
 
         // When: halaman dibuka, loadMoments dipanggil
-        viewModel.loadMoments()
+        viewModel.loadMoments(context: context)
 
         // Then
         #expect(viewModel.moments.count == 2)
@@ -84,8 +84,8 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
-        viewModel.loadMoments()
+        let viewModel = ReflectMomentViewModel(date: today)
+        viewModel.loadMoments(context: context)
 
         // When: user memilih salah satu momen
         viewModel.select(moment1)
@@ -105,10 +105,10 @@ struct ReflectMomentViewModelTests {
         let context = try makeInMemoryContext()
         let today = date(day: 17)
 
-        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        let viewModel = ReflectMomentViewModel(date: today)
 
         // When: halaman dibuka -> loadMoments dipanggil
-        viewModel.loadMoments()
+        viewModel.loadMoments(context: context)
 
         // Then
         #expect(viewModel.isEmptyState == true)
@@ -131,8 +131,8 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
-        viewModel.loadMoments()
+        let viewModel = ReflectMomentViewModel(date: today)
+        viewModel.loadMoments(context: context)
         viewModel.select(moment2)
 
         // Given: siap tekan tombol lanjut
