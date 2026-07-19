@@ -11,7 +11,7 @@ import SwiftData
 
 struct ReflectMomentView: View {
 
-    @Environment(\.modelContext) private var modelContext
+    //@Environment(\.modelContext) private var modelContext
     @State private var viewModel: ReflectMomentViewModel
     let onClose: () -> Void
 
@@ -62,7 +62,7 @@ struct ReflectMomentView: View {
         }
         .padding()
         .task {
-            try? QuestionSeeder.seed(in: modelContext)
+            viewModel.seedQuestionsIfNeeded()
             viewModel.loadQuestions()
             viewModel.loadMoments()
         }

@@ -112,6 +112,10 @@ final class ReflectMomentViewModel {
 
     // MARK: TEC-214: load & akses bank pertanyaan
 
+    func seedQuestionsIfNeeded() {
+        try? QuestionSeeder.seed(in: modelContext)
+    }
+
     func loadQuestions() {
         let descriptor = FetchDescriptor<Question>(
             sortBy: [SortDescriptor(\.displayOrder, order: .forward)]
