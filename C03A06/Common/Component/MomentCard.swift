@@ -10,7 +10,7 @@ import SwiftUI
 
 struct MomentCard: View {
     let moment: Moment
-    
+
     var body: some View {
         Group {
             if let uiImage = UIImage(data: moment.photo) {
