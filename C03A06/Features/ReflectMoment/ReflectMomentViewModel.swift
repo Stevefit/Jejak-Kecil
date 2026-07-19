@@ -84,4 +84,10 @@ final class ReflectMomentViewModel {
         guard canProceedFromMomentSelection else { return }
         step = .question
     }
+
+    // MARK: kembali dari halaman pertanyaan ke pemilihan momen
+
+    func backToMomentSelection() {
+        step = .selectMoment
+    }
 }
