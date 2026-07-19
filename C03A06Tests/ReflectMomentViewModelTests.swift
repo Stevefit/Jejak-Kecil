@@ -57,10 +57,10 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(date: today)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
 
         // When: halaman dibuka, loadMoments dipanggil
-        viewModel.loadMoments(context: context)
+        viewModel.loadMoments()
 
         // Then
         #expect(viewModel.moments.count == 2)
@@ -84,8 +84,8 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(date: today)
-        viewModel.loadMoments(context: context)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        viewModel.loadMoments()
 
         // When: user memilih salah satu momen
         viewModel.select(moment1)
@@ -105,10 +105,10 @@ struct ReflectMomentViewModelTests {
         let context = try makeInMemoryContext()
         let today = date(day: 17)
 
-        let viewModel = ReflectMomentViewModel(date: today)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
 
         // When: halaman dibuka -> loadMoments dipanggil
-        viewModel.loadMoments(context: context)
+        viewModel.loadMoments()
 
         // Then
         #expect(viewModel.isEmptyState == true)
@@ -131,8 +131,8 @@ struct ReflectMomentViewModelTests {
         context.insert(moment2)
         try context.save()
 
-        let viewModel = ReflectMomentViewModel(date: today)
-        viewModel.loadMoments(context: context)
+        let viewModel = ReflectMomentViewModel(modelContext: context, date: today)
+        viewModel.loadMoments()
         viewModel.select(moment2)
 
         // Given: siap tekan tombol lanjut
@@ -148,7 +148,8 @@ struct ReflectMomentViewModelTests {
     }
 }
 
-// MARK: TEC-214 (belum ada viewmodel)
+// MARK: TEC-214 (sebelum vm)
+/*
 
 enum DummyAnswerType {
     case multipleChoice
@@ -483,5 +484,206 @@ struct ReflectMomentQuestionFlowTests {
 
         #expect(state.visiblePages.count == 1)
         #expect(state.visiblePages.first?.codes == ["Q5"])
+    }
+}
+*/
+
+// MARK: TEC-214 (sudah vm)
+
+@MainActor
+@Suite("Answer Daily Reflection Questions - ViewModel (TEC-214)")
+struct ReflectMomentQuestionViewModelTests {
+
+    // MARK: helper
+
+    private func makeContextWithQuestions() throws -> ModelContext {
+        let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
+        for question in QuestionSeeder.makeSeedQuestions() {
+            context.insert(question)
+        }
+        try context.save()
+        return context
+    }
+
+    private func makeViewModel(context: ModelContext) -> ReflectMomentViewModel {
+        let viewModel = ReflectMomentViewModel(modelContext: context)
+        viewModel.loadQuestions()
+        return viewModel
+    }
+
+    private func choice(_ type: ChoiceType, in viewModel: ReflectMomentViewModel, questionCode: String) -> Choice {
+        let question = viewModel.allQuestions.first { $0.code == questionCode }!
+        return question.choices.first { $0.type == type }!
+    }
+
+    // MARK: assertion 1
+    // Given Q1 (multipleChoice) belum dijawab
+    // When halaman pertanyaan dibuka
+    // Then tombol lanjut nonaktif (halaman belum lengkap)
+
+    @Test("Given Q1 belum dijawab, When halaman dibuka, Then halaman belum lengkap (tombol lanjut nonaktif)")
+    func trailingButtonDisabledWhenQuestionNotAnsweredYet() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        #expect(viewModel.isCurrentQuestionPageComplete == false)
+    }
+
+    // MARK: assertion 2
+    // Given Q1 ditampilkan
+    // When user memilih salah satu choice
+    // Then jawaban tersimpan dan halaman menjadi lengkap (tombol lanjut aktif)
+
+    @Test("Given Q1 ditampilkan, When user memilih salah satu choice, Then jawaban tersimpan dan halaman lengkap")
+    func selectingChoiceEnablesTrailingButton() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        let choiceA = choice(.a, in: viewModel, questionCode: "Q1")
+        viewModel.selectChoice(choiceA, for: "Q1")
+
+        #expect(viewModel.draft(for: "Q1")?.selectedChoice?.persistentModelID == choiceA.persistentModelID)
+        #expect(viewModel.isCurrentQuestionPageComplete == true)
+    }
+
+    // MARK: assertion 3
+    // Given Q1 dijawab dengan choice C ("Orang lain yang memulai")
+    // When daftar halaman visible dihitung
+    // Then FQ1 (follow-up) ikut muncul di halaman pertama
+
+    @Test("Given Q1 dijawab choice C, When halaman visible dihitung, Then FQ1 ikut muncul di halaman pertama")
+    func followUpAppearsWhenTriggerConditionMet() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChoice(choice(.c, in: viewModel, questionCode: "Q1"), for: "Q1")
+
+        #expect(viewModel.visiblePages.first?.codes == ["Q1", "FQ1"])
+    }
+
+    // MARK: assertion 4
+    // Given Q1 dijawab dengan choice selain C
+    // When daftar halaman visible dihitung
+    // Then FQ1 TIDAK muncul (hanya Q1 di halaman pertama)
+
+    @Test("Given Q1 dijawab choice selain C, When halaman visible dihitung, Then FQ1 tidak muncul")
+    func followUpHiddenWhenTriggerConditionNotMet() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q1"), for: "Q1")
+
+        #expect(viewModel.visiblePages.first?.codes == ["Q1"])
+    }
+
+    // MARK: assertion 5
+    // Given halaman terakhir memuat essay Q6 (opsional)
+    // When Q4 & Q5 dijawab tapi Q6 dibiarkan kosong
+    // Then halaman tetap lengkap (essay tidak wajib diisi)
+
+    @Test("Given halaman terakhir ada essay Q6, When Q4 & Q5 dijawab tapi Q6 kosong, Then halaman tetap lengkap")
+    func essayIsOptionalForPageCompletion() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        // Lewati halaman-halaman wajib menuju halaman terakhir.
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q1"), for: "Q1")
+        viewModel.goToNextQuestionPage()
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q2"), for: "Q2")
+        viewModel.goToNextQuestionPage()
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q3"), for: "Q3")
+        viewModel.goToNextQuestionPage()
+
+        // Halaman terakhir: jawab chip Q4 & Q5, biarkan essay Q6 kosong.
+        viewModel.selectChip("Hangat", for: "Q4")
+        viewModel.selectChip("Mungkin", for: "Q5")
+
+        #expect(viewModel.isLastQuestionPage == true)
+        #expect(viewModel.isCurrentQuestionPageComplete == true)
+    }
+
+    // MARK: assertion 6
+    // Given halaman pertama sudah dijawab
+    // When user menekan lanjut
+    // Then currentQuestionIndex berpindah ke halaman berikutnya
+
+    @Test("Given halaman pertama sudah dijawab, When goToNextQuestionPage, Then pindah ke halaman berikutnya")
+    func goNextMovesToNextPage() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q1"), for: "Q1")
+        #expect(viewModel.currentQuestionIndex == 0)
+
+        viewModel.goToNextQuestionPage()
+        #expect(viewModel.currentQuestionIndex == 1)
+    }
+
+    // MARK: assertion 7
+    // Given user berada di halaman kedua
+    // When user menekan kembali
+    // Then currentQuestionIndex kembali ke halaman sebelumnya
+
+    @Test("Given user di halaman kedua, When goToPreviousQuestionPage, Then kembali ke halaman sebelumnya")
+    func goBackMovesToPreviousPage() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChoice(choice(.a, in: viewModel, questionCode: "Q1"), for: "Q1")
+        viewModel.goToNextQuestionPage()
+        #expect(viewModel.currentQuestionIndex == 1)
+
+        viewModel.goToPreviousQuestionPage()
+        #expect(viewModel.currentQuestionIndex == 0)
+    }
+
+    // MARK: assertion 8
+    // Given Q5 dijawab dengan chip "Iya"
+    // When daftar halaman visible dihitung
+    // Then FQ2 (follow-up) ikut muncul di halaman terakhir
+
+    @Test("Given Q5 dijawab chip Iya, When halaman visible dihitung, Then FQ2 muncul di halaman terakhir")
+    func fq2AppearsWhenQ5Iya() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChip("Iya", for: "Q5")
+
+        #expect(viewModel.visiblePages.last?.codes == ["Q4", "Q5", "FQ2", "Q6"])
+    }
+
+    // MARK: assertion 9
+    // Given Q5 dijawab dengan chip selain "Iya"
+    // When daftar halaman visible dihitung
+    // Then FQ2 TIDAK muncul di halaman terakhir
+
+    @Test("Given Q5 dijawab chip selain Iya, When halaman visible dihitung, Then FQ2 tidak muncul")
+    func fq2HiddenWhenQ5NotIya() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChip("Mungkin", for: "Q5")
+
+        #expect(viewModel.visiblePages.last?.codes == ["Q4", "Q5", "Q6"])
+    }
+
+    // MARK: assertion 10
+    // Given FQ2 sudah muncul karena Q5 = "Iya"
+    // When user mengganti jawaban Q5 menjadi "Tidak hari ini"
+    // Then FQ2 otomatis hilang dari halaman terakhir
+
+    @Test("Given FQ2 sudah muncul karena Q5 = Iya, When Q5 diganti jadi Tidak hari ini, Then FQ2 otomatis hilang")
+    func fq2DisappearsWhenQ5Changed() throws {
+        let context = try makeContextWithQuestions()
+        let viewModel = makeViewModel(context: context)
+
+        viewModel.selectChip("Iya", for: "Q5")
+        #expect(viewModel.visiblePages.last?.codes == ["Q4", "Q5", "FQ2", "Q6"])
+
+        viewModel.selectChip("Tidak hari ini", for: "Q5")
+        #expect(viewModel.visiblePages.last?.codes == ["Q4", "Q5", "Q6"])
     }
 }

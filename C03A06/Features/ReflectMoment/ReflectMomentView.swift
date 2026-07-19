@@ -15,30 +15,20 @@ struct ReflectMomentView: View {
     @State private var viewModel: ReflectMomentViewModel
     let onClose: () -> Void
 
-    init(date: Date = .now, onClose: @escaping () -> Void) {
-        _viewModel = State(initialValue: ReflectMomentViewModel(date: date))
+    init(
+        modelContext: ModelContext,
+        date: Date = .now,
+        onClose: @escaping () -> Void
+    ) {
+        _viewModel = State(
+            initialValue: ReflectMomentViewModel(
+                modelContext: modelContext,
+                date: date
+            )
+        )
+
         self.onClose = onClose
     }
-
-    // MARK: TEC-214: answer daily reflection questions
-
-    @Query(sort: \Question.displayOrder)
-    private var allQuestions: [Question]
-
-    private var allDailyQuestions: [Question] {
-        allQuestions.filter { $0.scope == .daily }
-    }
-
-    @State private var currentQuestionIndex: Int = 0
-    @State private var localDraftAnswers: [String: LocalAnswerDraft] = [:]
-
-    private let pageTemplates: [[String]] = [
-        ["Q1", "FQ1"],
-        ["Q2"],
-        ["Q3"],
-        ["Q4", "Q5", "FQ2", "Q6"]
-    ]
-
     // MARK: body
 
     var body: some View {
@@ -72,9 +62,9 @@ struct ReflectMomentView: View {
         }
         .padding()
         .task {
-            // Jaring pengaman: pastikan bank pertanyaan ter-seed sebelum halaman pertanyaan.
             try? QuestionSeeder.seed(in: modelContext)
-            viewModel.loadMoments(context: modelContext)
+            viewModel.loadQuestions()
+            viewModel.loadMoments()
         }
     }
 
@@ -99,26 +89,22 @@ struct ReflectMomentView: View {
         viewModel.step == .selectMoment ? "xmark" : "chevron.left"
     }
 
-    private var isLastQuestionPage: Bool {
-        currentQuestionIndex == visiblePages.count - 1
-    }
-
     private var trailingIcon: String {
-        if viewModel.step == .question, isLastQuestionPage {
+        if viewModel.step == .question, viewModel.isLastQuestionPage {
             return "checkmark"
         }
         return "chevron.right"
     }
 
     private var trailingColor: Color {
-        if viewModel.step == .question, isLastQuestionPage {
+        if viewModel.step == .question, viewModel.isLastQuestionPage {
             return .blue
         }
         return Color(.systemGray6)
     }
 
     private var trailingForegroundColor: Color {
-        if viewModel.step == .question, isLastQuestionPage {
+        if viewModel.step == .question, viewModel.isLastQuestionPage {
             return .white
         }
         return .primary
@@ -129,7 +115,7 @@ struct ReflectMomentView: View {
         case .selectMoment:
             return viewModel.canProceedFromMomentSelection
         case .question:
-            return isCurrentQuestionPageComplete
+            return viewModel.isCurrentQuestionPageComplete
         case .completed:
             return false
         }
@@ -140,14 +126,14 @@ struct ReflectMomentView: View {
         case .selectMoment:
             return 1
         case .question:
-            return currentQuestionIndex + 2
+            return viewModel.currentQuestionIndex + 2
         case .completed:
             return progressTotal
         }
     }
 
     private var progressTotal: Int {
-        1 + visiblePages.count
+        1 + viewModel.visiblePages.count
     }
 
     private func handleLeadingTap() {
@@ -155,7 +141,7 @@ struct ReflectMomentView: View {
         case .selectMoment:
             onClose()
         case .question:
-            goToPreviousQuestionPage()
+            viewModel.goToPreviousQuestionPage()
         case .completed:
             onClose()
         }
@@ -165,9 +151,13 @@ struct ReflectMomentView: View {
         switch viewModel.step {
         case .selectMoment:
             viewModel.proceedToQuestions()
-            currentQuestionIndex = 0
         case .question:
-            goToNextQuestionPage()
+            if viewModel.isLastQuestionPage {
+                viewModel.saveReflection()
+                onClose()
+            } else {
+                viewModel.goToNextQuestionPage()
+            }
         case .completed:
             break
         }
@@ -253,73 +243,20 @@ struct ReflectMomentView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: TEC-214: navigasi & visibilitas halaman pertanyaan
-
-    private var questionsByCode: [String: Question] {
-        Dictionary(uniqueKeysWithValues: allDailyQuestions.map { ($0.code, $0) })
-    }
-
-    private func isQuestionVisible(_ code: String) -> Bool {
-        guard let question = questionsByCode[code] else { return false }
-        guard question.isFollowUp, let triggerCode = question.triggerQuestionCode else { return true }
-        guard let draft = localDraftAnswers[triggerCode] else { return false }
-
-        if let requiredChoiceType = question.triggerChoiceType {
-            return draft.selectedChoice?.type == requiredChoiceType
-        }
-        if let requiredChipValue = question.triggerChipValue {
-            return draft.selectedChip == requiredChipValue
-        }
-        return false
-    }
-
-    private var visiblePages: [LocalQuestionPage] {
-        pageTemplates.compactMap { template in
-            let visibleCodes = template.filter { isQuestionVisible($0) }
-            guard !visibleCodes.isEmpty else { return nil }
-            return LocalQuestionPage(id: template.joined(separator: "-"), codes: visibleCodes)
-        }
-    }
-
-    private func questions(in page: LocalQuestionPage) -> [Question] {
-        page.codes.compactMap { questionsByCode[$0] }
-    }
-
-    private var isCurrentQuestionPageComplete: Bool {
-        guard visiblePages.indices.contains(currentQuestionIndex) else { return false }
-        let page = visiblePages[currentQuestionIndex]
-        return questions(in: page).allSatisfy { question in
-            question.answerType == .essay || (localDraftAnswers[question.code]?.isAnswered ?? false)
-        }
-    }
-
-    private func goToNextQuestionPage() {
-        guard isCurrentQuestionPageComplete else { return }
-        if currentQuestionIndex < visiblePages.count - 1 {
-            currentQuestionIndex += 1
-        }
-    }
-
-    private func goToPreviousQuestionPage() {
-        if currentQuestionIndex > 0 {
-            currentQuestionIndex -= 1
-        } else {
-            viewModel.backToMomentSelection()
-        }
-    }
+    // MARK: TEC-214: tampilan halaman pertanyaan (baca state dari ViewModel)
 
     private var questionTopGapRatio: CGFloat {
-        guard visiblePages.indices.contains(currentQuestionIndex) else { return 0.13 }
-        let count = questions(in: visiblePages[currentQuestionIndex]).count
+        guard viewModel.visiblePages.indices.contains(viewModel.currentQuestionIndex) else { return 0.13 }
+        let count = viewModel.questions(in: viewModel.visiblePages[viewModel.currentQuestionIndex]).count
         return count >= 3 ? 0.04 : 0.13
     }
 
     @ViewBuilder
     private var questionContent: some View {
-        if visiblePages.indices.contains(currentQuestionIndex) {
-            let page = visiblePages[currentQuestionIndex]
+        if viewModel.visiblePages.indices.contains(viewModel.currentQuestionIndex) {
+            let page = viewModel.visiblePages[viewModel.currentQuestionIndex]
             VStack(alignment: .leading, spacing: 28) {
-                ForEach(questions(in: page), id: \.persistentModelID) { question in
+                ForEach(viewModel.questions(in: page), id: \.persistentModelID) { question in
                     questionInput(for: question, isCombinedPage: page.codes.count > 1)
                 }
             }
@@ -330,15 +267,16 @@ struct ReflectMomentView: View {
     }
 
     // MARK: TEC-215 - TEC-222: UI input per pertanyaan
+    
     @ViewBuilder
     private func questionInput(for question: Question, isCombinedPage: Bool) -> some View {
         switch question.answerType {
         case .multipleChoice:
             MultipleChoiceSelector(
                 question: question,
-                selected: localDraftAnswers[question.code]?.selectedChoice,
+                selected: viewModel.draft(for: question.code)?.selectedChoice,
                 onSelect: { choice in
-                    localDraftAnswers[question.code] = LocalAnswerDraft(selectedChoice: choice)
+                    viewModel.selectChoice(choice, for: question.code)
                 }
             )
 
@@ -346,17 +284,17 @@ struct ReflectMomentView: View {
             if isCombinedPage {
                 ChipDropdownSelector(
                     question: question,
-                    selected: localDraftAnswers[question.code]?.selectedChip,
+                    selected: viewModel.draft(for: question.code)?.selectedChip,
                     onSelect: { chip in
-                        localDraftAnswers[question.code] = LocalAnswerDraft(selectedChip: chip)
+                        viewModel.selectChip(chip, for: question.code)
                     }
                 )
             } else {
                 ChipSelector(
                     question: question,
-                    selected: localDraftAnswers[question.code]?.selectedChip,
+                    selected: viewModel.draft(for: question.code)?.selectedChip,
                     onSelect: { chip in
-                        localDraftAnswers[question.code] = LocalAnswerDraft(selectedChip: chip)
+                        viewModel.selectChip(chip, for: question.code)
                     }
                 )
             }
@@ -365,32 +303,11 @@ struct ReflectMomentView: View {
             EssayInput(
                 question: question,
                 text: Binding(
-                    get: { localDraftAnswers[question.code]?.essayText ?? "" },
-                    set: { text in
-                        var draft = localDraftAnswers[question.code] ?? LocalAnswerDraft()
-                        draft.essayText = text
-                        localDraftAnswers[question.code] = draft
-                    }
+                    get: { viewModel.draft(for: question.code)?.essayText ?? "" },
+                    set: { viewModel.setEssay($0, for: question.code) }
                 )
             )
         }
-    }
-}
-
-// MARK: struct pendukung halaman pertanyaan (TEC-214)
-
-private struct LocalQuestionPage: Identifiable {
-    let id: String
-    let codes: [String]
-}
-
-private struct LocalAnswerDraft {
-    var selectedChoice: Choice?
-    var selectedChip: String?
-    var essayText: String?
-
-    var isAnswered: Bool {
-        selectedChoice != nil || selectedChip != nil || (essayText?.isEmpty == false)
     }
 }
 
@@ -428,9 +345,12 @@ private func dummyPhotoData(color: UIColor) -> Data {
 
     return Color(.systemGray5)
         .sheet(isPresented: .constant(true)) {
-            ReflectMomentView(onClose: {})
-                .presentationDetents([.large])
-                .presentationDragIndicator(.hidden)
+            ReflectMomentView(
+                modelContext: container.mainContext,
+                onClose: {}
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.hidden)
         }
         .modelContainer(container)
 }
@@ -442,6 +362,9 @@ private func dummyPhotoData(color: UIColor) -> Data {
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
 
-    return ReflectMomentView(onClose: {})
-        .modelContainer(container)
+    ReflectMomentView(
+        modelContext: container.mainContext,
+        onClose: {}
+    )
+    .modelContainer(container)
 }
