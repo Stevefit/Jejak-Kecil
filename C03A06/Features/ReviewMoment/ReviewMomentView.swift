@@ -6,7 +6,6 @@ struct ReviewMomentView: View {
     @State private var viewModel = ReviewMomentViewModel()
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
-    @State private var showingReflectMoment = false
     
     var body: some View {
         NavigationStack {
@@ -90,7 +89,7 @@ struct ReviewMomentView: View {
                             ReflectionCard(reflection: reflection)
                         } else {
                             VStack(spacing: 16) {
-                                Button(action: {showingReflectMoment = true}) {
+                                Button(action: {}) {
                                     Image(systemName: "plus")
                                         .font(.title2)
                                         .foregroundColor(.black)
@@ -134,14 +133,6 @@ struct ReviewMomentView: View {
                 viewModel.fetchData()
             }) {
                 CreateMomentView()
-            }
-            .sheet(isPresented: $showingReflectMoment, onDismiss: {
-                viewModel.fetchData(in: modelContext)
-            }) {
-                ReflectMomentView(
-                    modelContext: modelContext,
-                    onClose: { showingReflectMoment = false }
-                )
             }
         }
     }

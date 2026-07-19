@@ -43,7 +43,7 @@ struct EssayInput: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
             }
-            .frame(height: 100)
+            .frame(minHeight: 100)
         }
     }
 }

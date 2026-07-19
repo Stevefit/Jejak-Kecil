@@ -14,22 +14,6 @@ enum ReflectStep: Equatable {
     case completed
 }
 
-struct LocalQuestionPage: Identifiable {
-    let id: String
-    let codes: [String]
-}
-
-struct LocalAnswerDraft {
-    var selectedChoice: Choice?
-    var selectedChip: String?
-    var essayText: String?
-
-    var isAnswered: Bool {
-        selectedChoice != nil || selectedChip != nil || (essayText?.isEmpty == false)
-    }
-}
-
-@MainActor
 @Observable
 final class ReflectMomentViewModel {
 
@@ -40,46 +24,42 @@ final class ReflectMomentViewModel {
     // MARK: TEC-210: moment selection state
 
     private(set) var moments: [Moment] = []
-    private(set) var selectedMoment: Moment?
-
-    // MARK: TEC-214: question state
-
-    private(set) var allQuestions: [Question] = []
-    var currentQuestionIndex: Int = 0
-    var localDraftAnswers: [String: LocalAnswerDraft] = [:]
+    var selectedMoment: Moment?
+    private(set) var isLoadingMoments: Bool = false
 
     private let date: Date
-    private var modelContext: ModelContext
 
-    private let pageTemplates: [[String]] = [
-        ["Q1", "FQ1"],
-        ["Q2"],
-        ["Q3"],
-        ["Q4", "Q5", "FQ2", "Q6"]
-    ]
-
-    init(modelContext: ModelContext, date: Date = .now) {
-        self.modelContext = modelContext
+    init(date: Date = .now) {
         self.date = date
     }
 
-    // MARK: TEC-211: load moment hari ini
+    // MARK: TEC-211: show all moments logged that day
+    // modelContext diterima dari View (yang mengambilnya dari @Environment),
+    // bukan disimpan lewat init.
 
-    func loadMoments() {
-        guard let range = Calendar.current.dayRange(for: date) else {
+    func loadMoments(context: ModelContext) {
+        isLoadingMoments = true
+        defer { isLoadingMoments = false }
+
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
             moments = []
             return
         }
-        let start = range.lowerBound
-        let end = range.upperBound
 
         let descriptor = FetchDescriptor<Moment>(
             predicate: #Predicate { moment in
-                moment.timestamp >= start && moment.timestamp < end
+                moment.timestamp >= startOfDay && moment.timestamp < endOfDay
             },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
-        moments = (try? modelContext.fetch(descriptor)) ?? []
+
+        do {
+            moments = try context.fetch(descriptor)
+        } catch {
+            moments = []
+        }
     }
 
     func select(_ moment: Moment) {
@@ -98,143 +78,10 @@ final class ReflectMomentViewModel {
         selectedMoment != nil
     }
 
-    // MARK: transisi step
+    // MARK: transisi selectMoment ke question
 
     func proceedToQuestions() {
         guard canProceedFromMomentSelection else { return }
-        currentQuestionIndex = 0
         step = .question
-    }
-
-    func backToMomentSelection() {
-        step = .selectMoment
-    }
-
-    // MARK: TEC-214: load & akses bank pertanyaan
-
-    func seedQuestionsIfNeeded() {
-        try? QuestionSeeder.seed(in: modelContext)
-    }
-
-    func loadQuestions() {
-        let descriptor = FetchDescriptor<Question>(
-            sortBy: [SortDescriptor(\.displayOrder, order: .forward)]
-        )
-        allQuestions = (try? modelContext.fetch(descriptor)) ?? []
-    }
-
-    private var allDailyQuestions: [Question] {
-        allQuestions.filter { $0.scope == .daily }
-    }
-
-    private var questionsByCode: [String: Question] {
-        Dictionary(uniqueKeysWithValues: allDailyQuestions.map { ($0.code, $0) })
-    }
-
-    // MARK: TEC-214: visibilitas & navigasi halaman
-
-    private func isQuestionVisible(_ code: String) -> Bool {
-        guard let question = questionsByCode[code] else { return false }
-        guard question.isFollowUp, let triggerCode = question.triggerQuestionCode else { return true }
-        guard let draft = localDraftAnswers[triggerCode] else { return false }
-
-        if let requiredChoiceType = question.triggerChoiceType {
-            return draft.selectedChoice?.type == requiredChoiceType
-        }
-        if let requiredChipValue = question.triggerChipValue {
-            return draft.selectedChip == requiredChipValue
-        }
-        return false
-    }
-
-    var visiblePages: [LocalQuestionPage] {
-        pageTemplates.compactMap { template in
-            let visibleCodes = template.filter { isQuestionVisible($0) }
-            guard !visibleCodes.isEmpty else { return nil }
-            return LocalQuestionPage(id: template.joined(separator: "-"), codes: visibleCodes)
-        }
-    }
-
-    func questions(in page: LocalQuestionPage) -> [Question] {
-        page.codes.compactMap { questionsByCode[$0] }
-    }
-
-    var isCurrentQuestionPageComplete: Bool {
-        guard visiblePages.indices.contains(currentQuestionIndex) else { return false }
-        let page = visiblePages[currentQuestionIndex]
-        return questions(in: page).allSatisfy { question in
-            question.answerType == .essay || (localDraftAnswers[question.code]?.isAnswered ?? false)
-        }
-    }
-
-    var isLastQuestionPage: Bool {
-        currentQuestionIndex == visiblePages.count - 1
-    }
-
-    func goToNextQuestionPage() {
-        guard isCurrentQuestionPageComplete else { return }
-        if currentQuestionIndex < visiblePages.count - 1 {
-            currentQuestionIndex += 1
-        }
-    }
-
-    func goToPreviousQuestionPage() {
-        if currentQuestionIndex > 0 {
-            currentQuestionIndex -= 1
-        } else {
-            backToMomentSelection()
-        }
-    }
-
-    // MARK: TEC-214: update draft jawaban
-
-    func draft(for code: String) -> LocalAnswerDraft? {
-        localDraftAnswers[code]
-    }
-
-    func selectChoice(_ choice: Choice, for code: String) {
-        localDraftAnswers[code] = LocalAnswerDraft(selectedChoice: choice)
-    }
-
-    func selectChip(_ chip: String, for code: String) {
-        localDraftAnswers[code] = LocalAnswerDraft(selectedChip: chip)
-    }
-
-    func setEssay(_ text: String, for code: String) {
-        var draft = localDraftAnswers[code] ?? LocalAnswerDraft()
-        draft.essayText = text
-        localDraftAnswers[code] = draft
-    }
-
-    // MARK: TEC-214: simpan refleksi ke database
-
-    @discardableResult
-    func saveReflection() -> Bool {
-        guard let moment = selectedMoment else { return false }
-
-        let reflection = Reflection(date: date, moment: moment, isCompleted: true)
-        modelContext.insert(reflection)
-
-        for page in visiblePages {
-            for question in questions(in: page) {
-                guard let draft = localDraftAnswers[question.code], draft.isAnswered else { continue }
-                let answer = Answer(
-                    question: question,
-                    selectedChoice: draft.selectedChoice,
-                    selectedChip: draft.selectedChip,
-                    essayText: draft.essayText,
-                    reflection: reflection
-                )
-                modelContext.insert(answer)
-            }
-        }
-
-        do {
-            try modelContext.save()
-            step = .completed
-            return true
-        } catch {
-            return false
-        }
     }
 }
