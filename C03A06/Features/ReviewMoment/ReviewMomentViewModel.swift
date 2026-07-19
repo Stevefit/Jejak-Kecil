@@ -8,16 +8,20 @@ final class ReviewMomentViewModel {
     var moments: [Moment] = []
     var reflection: Reflection?
     
-    func changeDate(to newDate: Date, in context: ModelContext) {
+    var modelContext: ModelContext?
+    
+    func changeDate(to newDate: Date) {
         selectedDate = newDate
-        fetchData(in: context)
+        fetchData()
     }
     
-    func fetchData(in context: ModelContext) {
-        guard let range = Calendar.current.dayRange(for: selectedDate) else { return }
-        let startOfDay = range.lowerBound
-        let endOfDay = range.upperBound
-
+    func fetchData() {
+        guard let context = modelContext else { return }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        
         let momentPredicate = #Predicate<Moment> { moment in
             moment.timestamp >= startOfDay && moment.timestamp < endOfDay
         }
