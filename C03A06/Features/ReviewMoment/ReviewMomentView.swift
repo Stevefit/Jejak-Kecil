@@ -136,7 +136,7 @@ struct ReviewMomentView: View {
                 CreateMomentView()
             }
             .sheet(isPresented: $showingReflectMoment, onDismiss: {
-                viewModel.fetchData(in: modelContext)
+                viewModel.fetchData()
             }) {
                 ReflectMomentView(
                     modelContext: modelContext,
