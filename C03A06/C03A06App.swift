@@ -1,10 +1,3 @@
-//
-//  C03A06App.swift
-//  C03A06
-//
-//  Created by Steve on 13/07/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -13,6 +6,11 @@ struct C03A06App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            Moment.self,
+            Reflection.self,
+            Answer.self,
+            Question.self,
+            Choice.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +23,7 @@ struct C03A06App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ReviewMomentView()
         }
         .modelContainer(sharedModelContainer)
     }
