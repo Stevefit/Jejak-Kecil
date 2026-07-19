@@ -123,13 +123,14 @@ struct ReviewMomentView: View {
             }
             .background(Color(.systemGray6).edgesIgnoringSafeArea(.all))
             .onAppear {
-                viewModel.fetchData(in: modelContext)
+                viewModel.modelContext = modelContext
+                viewModel.fetchData()
             }
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarHistoryView()
             }
             .sheet(isPresented: $showingCreateMoment, onDismiss: {
-                viewModel.fetchData(in: modelContext)
+                viewModel.fetchData()
             }) {
                 CreateMomentView()
             }
