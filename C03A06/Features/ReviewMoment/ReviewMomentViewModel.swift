@@ -29,7 +29,7 @@ final class ReviewMomentViewModel {
             predicate: momentPredicate,
             sortBy: [SortDescriptor(\.timestamp)]
         )
-        
+
         let reflectionPredicate = #Predicate<Reflection> { reflection in
             reflection.date >= startOfDay && reflection.date < endOfDay
         }
