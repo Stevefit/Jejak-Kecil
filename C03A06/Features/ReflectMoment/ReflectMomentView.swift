@@ -85,7 +85,7 @@ struct ReflectMomentView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: spacing) {
                     ForEach(viewModel.moments, id: \.persistentModelID) { moment in
-                        MomentCard(
+                        SelectableMomentCard(
                             moment: moment,
                             isSelected: viewModel.selectedMoment?.persistentModelID == moment.persistentModelID
                         )

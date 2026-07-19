@@ -1,10 +1,3 @@
-//
-//  C03A06App.swift
-//  C03A06
-//
-//  Created by Steve on 13/07/26.
-//
-
 import SwiftUI
 import SwiftData
 
