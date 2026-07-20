@@ -29,7 +29,6 @@ struct LocalAnswerDraft {
     }
 }
 
-@MainActor
 @Observable
 final class ReflectMomentViewModel {
 
@@ -67,6 +66,7 @@ final class ReflectMomentViewModel {
 
     func loadMoments() {
         guard let range = Calendar.current.dayRange(for: date) else {
+            print("[ReflectMomentViewModel] loadMoments error: gagal mendapatkan dayRange untuk date \(date)")
             moments = []
             return
         }
@@ -79,7 +79,13 @@ final class ReflectMomentViewModel {
             },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
-        moments = (try? modelContext.fetch(descriptor)) ?? []
+
+        do {
+            moments = try modelContext.fetch(descriptor)
+        } catch {
+            print("[ReflectMomentViewModel] loadMoments error: fetch Moment gagal - \(error)")
+            moments = []
+        }
     }
 
     func select(_ moment: Moment) {
@@ -101,7 +107,10 @@ final class ReflectMomentViewModel {
     // MARK: transisi step
 
     func proceedToQuestions() {
-        guard canProceedFromMomentSelection else { return }
+        guard canProceedFromMomentSelection else {
+            print("[ReflectMomentViewModel] proceedToQuestions error: belum ada moment yang dipilih (selectedMoment == nil)")
+            return
+        }
         currentQuestionIndex = 0
         step = .question
     }
@@ -113,14 +122,24 @@ final class ReflectMomentViewModel {
     // MARK: TEC-214: load & akses bank pertanyaan
 
     func seedQuestionsIfNeeded() {
-        try? QuestionSeeder.seed(in: modelContext)
+        do {
+            try QuestionSeeder.seed(in: modelContext)
+        } catch {
+            print("[ReflectMomentViewModel] seedQuestionsIfNeeded error: QuestionSeeder.seed gagal - \(error)")
+        }
     }
 
     func loadQuestions() {
         let descriptor = FetchDescriptor<Question>(
             sortBy: [SortDescriptor(\.displayOrder, order: .forward)]
         )
-        allQuestions = (try? modelContext.fetch(descriptor)) ?? []
+
+        do {
+            allQuestions = try modelContext.fetch(descriptor)
+        } catch {
+            print("[ReflectMomentViewModel] loadQuestions error: fetch Question gagal - \(error)")
+            allQuestions = []
+        }
     }
 
     private var allDailyQuestions: [Question] {
@@ -134,7 +153,10 @@ final class ReflectMomentViewModel {
     // MARK: TEC-214: visibilitas & navigasi halaman
 
     private func isQuestionVisible(_ code: String) -> Bool {
-        guard let question = questionsByCode[code] else { return false }
+        guard let question = questionsByCode[code] else {
+            print("[ReflectMomentViewModel] isQuestionVisible warning: question dengan code \(code) tidak ditemukan di questionsByCode")
+            return false
+        }
         guard question.isFollowUp, let triggerCode = question.triggerQuestionCode else { return true }
         guard let draft = localDraftAnswers[triggerCode] else { return false }
 
@@ -160,10 +182,17 @@ final class ReflectMomentViewModel {
     }
 
     var isCurrentQuestionPageComplete: Bool {
-        guard visiblePages.indices.contains(currentQuestionIndex) else { return false }
+        guard visiblePages.indices.contains(currentQuestionIndex) else {
+            print("[ReflectMomentViewModel] isCurrentQuestionPageComplete error: currentQuestionIndex \(currentQuestionIndex) di luar range visiblePages (count: \(visiblePages.count))")
+            return false
+        }
         let page = visiblePages[currentQuestionIndex]
         return questions(in: page).allSatisfy { question in
-            question.answerType == .essay || (localDraftAnswers[question.code]?.isAnswered ?? false)
+            // hanya essay follow-up (FQ1/FQ2) yang opsional; sisanya (termasuk Q6) wajib
+            if question.answerType == .essay && question.isFollowUp {
+                return true
+            }
+            return localDraftAnswers[question.code]?.isAnswered ?? false
         }
     }
 
@@ -172,7 +201,10 @@ final class ReflectMomentViewModel {
     }
 
     func goToNextQuestionPage() {
-        guard isCurrentQuestionPageComplete else { return }
+        guard isCurrentQuestionPageComplete else {
+            print("[ReflectMomentViewModel] goToNextQuestionPage error: halaman saat ini belum lengkap dijawab (index: \(currentQuestionIndex))")
+            return
+        }
         if currentQuestionIndex < visiblePages.count - 1 {
             currentQuestionIndex += 1
         }
@@ -210,7 +242,10 @@ final class ReflectMomentViewModel {
 
     @discardableResult
     func saveReflection() -> Bool {
-        guard let moment = selectedMoment else { return false }
+        guard let moment = selectedMoment else {
+            print("[ReflectMomentViewModel] saveReflection error: selectedMoment nil, refleksi tidak bisa disimpan")
+            return false
+        }
 
         let reflection = Reflection(date: date, moment: moment, isCompleted: true)
         modelContext.insert(reflection)
@@ -234,6 +269,7 @@ final class ReflectMomentViewModel {
             step = .completed
             return true
         } catch {
+            print("[ReflectMomentViewModel] saveReflection error: modelContext.save() gagal - \(error)")
             return false
         }
     }
