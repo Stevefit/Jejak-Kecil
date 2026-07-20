@@ -16,7 +16,11 @@ final class ReviewMomentViewModel {
     }
     
     func fetchData() {
-        guard let context = modelContext else { return }
+        guard let context = modelContext else {
+            self.moments = []
+            self.reflection = nil
+            return
+        }
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: selectedDate)
@@ -43,5 +47,18 @@ final class ReviewMomentViewModel {
             self.moments = []
             self.reflection = nil
         }
+    }
+    
+    func updateMoment(_ moment: Moment, withDescription description: String, date: Date, photoData: Data?) {
+        guard let context = modelContext else { return }
+        
+        moment.shortDescription = description
+        moment.timestamp = date
+        if let photoData {
+            moment.photo = photoData
+        }
+        
+        try? context.save()
+        fetchData()
     }
 }

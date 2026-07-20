@@ -59,7 +59,7 @@ struct ReviewMomentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 14) {
                                 ForEach(viewModel.moments) { moment in
-                                    NavigationLink(destination: MomentDetailView(allDayMoments: viewModel.moments, initialMoment: moment)) {
+                                    NavigationLink(destination: MomentDetailView(allDayMoments: viewModel.moments, initialMoment: moment, viewModel: viewModel)) {
                                         MomentCard(moment: moment)
                                     }
                                 }
@@ -136,7 +136,7 @@ struct ReviewMomentView: View {
                 CreateMomentView()
             }
             .sheet(isPresented: $showingReflectMoment, onDismiss: {
-                viewModel.fetchData(in: modelContext)
+                viewModel.fetchData()
             }) {
                 ReflectMomentView(
                     modelContext: modelContext,

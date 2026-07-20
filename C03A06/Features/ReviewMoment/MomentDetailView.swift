@@ -7,10 +7,12 @@ struct MomentDetailView: View {
     
     var allDayMoments: [Moment]
     @State private var currentMoment: Moment
+    var viewModel: ReviewMomentViewModel
     
-    init(allDayMoments: [Moment], initialMoment: Moment) {
+    init(allDayMoments: [Moment], initialMoment: Moment, viewModel: ReviewMomentViewModel) {
         self.allDayMoments = allDayMoments
         self._currentMoment = State(initialValue: initialMoment)
+        self.viewModel = viewModel
     }
 
     private var currentIndex: Int {
@@ -79,7 +81,7 @@ struct MomentDetailView: View {
                         .italic()
                         .foregroundColor(.black)
 
-                    Text(currentMoment.shortDescription ?? "")
+                    Text(currentMoment.shortDescription)
                         .font(.body)
                         .foregroundColor(.black)
                         .lineSpacing(4)
@@ -109,8 +111,12 @@ struct MomentDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $isEditing) {
-            EditMomentView(moment: currentMoment, isPresented: $isEditing)
+        .sheet(isPresented: $isEditing, onDismiss: {
+            if let updated = viewModel.moments.first(where: { $0.id == currentMoment.id }) {
+                currentMoment = updated
+            }
+        }) {
+            EditMomentView(moment: currentMoment, isPresented: $isEditing, viewModel: viewModel)
         }
     }
 }
