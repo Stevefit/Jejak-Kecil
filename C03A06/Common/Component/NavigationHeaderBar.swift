@@ -23,14 +23,14 @@ struct NavigationHeaderBar: View {
     var isTrailingEnabled: Bool = true
     let onTrailingTap: () -> Void
 
-    // MARK: progress dots
+    // MARK: progress bar
     var progressCurrent: Int = 0
     var progressTotal: Int = 0
-    var progressActiveColor: Color = .blue
-    var progressInactiveColor: Color = Color(.systemGray4)
+    var progressActiveColor: Color = .primary
+    var progressInactiveColor: Color = Color(.systemGray5)
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
             HStack {
                 HeaderIconButton(
                     icon: leadingIcon,
@@ -41,8 +41,16 @@ struct NavigationHeaderBar: View {
 
                 Spacer()
 
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
+                VStack(spacing: 5) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+
+                    if progressTotal > 0 {
+                        Text("\(progressCurrent) dari \(progressTotal)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 Spacer()
 
@@ -56,13 +64,19 @@ struct NavigationHeaderBar: View {
             }
 
             if progressTotal > 0 {
-                HStack(spacing: 4) {
-                    ForEach(0..<progressTotal, id: \.self) { index in
-                        Circle()
-                            .fill(index == progressCurrent - 1 ? progressActiveColor : progressInactiveColor)
-                            .frame(width: 6, height: 6)
-                    }
-                }
+                progressBar
+            }
+        }
+    }
+
+    // MARK: progress bar u/ satu kapsul per langkah
+    private var progressBar: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<max(progressTotal, 0), id: \.self) { index in
+                Capsule()
+                    .fill(index < progressCurrent ? progressActiveColor : progressInactiveColor)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 5)
             }
         }
     }
