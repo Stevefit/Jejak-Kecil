@@ -34,7 +34,9 @@ final class CreateMomentViewModel {
         //double check validasi sebelum menyimpan
         guard isFormValid, 
               let photo = photoData,
-              let category = selectedCategory else {
+              let category = selectedCategory
+        else {
+            print("Form is not valid") //Tambah error msg
             return
         }
         

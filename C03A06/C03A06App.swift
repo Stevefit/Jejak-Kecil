@@ -11,7 +11,8 @@ struct C03A06App: App {
             Reflection.self,
             Question.self,
             Choice.self,
-            Answer.self
+            Answer.self,
+            Recap.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -31,12 +32,14 @@ struct C03A06App: App {
         }
         .modelContainer(sharedModelContainer)
     }
+   
     
     @MainActor
        private func seedQuestionsIfNeeded() async {
            let context = sharedModelContainer.mainContext
            do {
                try QuestionSeeder.seed(in: context)
+               try RecapQuestionSeeder.seed(in: context)
            } catch {
                print("Gagal melakukan seeding Question: \(error)")
            }

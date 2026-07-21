@@ -13,9 +13,12 @@ struct ReviewMomentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     HStack(spacing: 12) {
-                        Button(action: {}) {
+                        NavigationLink {
+                            ParentProfileView()
+                        } label: {
                             ZStack {
                                 Color.orange.opacity(0.3)
+
                                 Image(systemName: "face.smiling.fill")
                                     .font(.title)
                                     .foregroundColor(.orange)
@@ -23,7 +26,7 @@ struct ReviewMomentView: View {
                             .frame(width: 54, height: 54)
                             .clipShape(Circle())
                         }
-                        
+                        .buttonStyle(.plain)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Halo,")
                                 .font(.subheadline)

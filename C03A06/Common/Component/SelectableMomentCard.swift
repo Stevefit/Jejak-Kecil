@@ -4,9 +4,6 @@
 //
 //  Created by Natalie Grace Widjaja Kuswanto on 16/07/26.
 //
-//  Kartu momen untuk carousel Reflect: mengisi frame yang diberikan
-//  dan menampilkan border saat terpilih (isSelected).
-//
 
 import SwiftUI
 
@@ -34,6 +31,7 @@ struct SelectableMomentCard: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .opacity(isSelected ? 1.0 : 0.5)
         .overlay {
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(
@@ -41,5 +39,6 @@ struct SelectableMomentCard: View {
                     lineWidth: 3
                 )
         }
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }

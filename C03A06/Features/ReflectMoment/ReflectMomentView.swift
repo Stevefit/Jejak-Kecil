@@ -11,8 +11,8 @@ import SwiftData
 
 struct ReflectMomentView: View {
 
-    //@Environment(\.modelContext) private var modelContext
     @State private var viewModel: ReflectMomentViewModel
+    @State private var showCancelConfirmation = false
     let onClose: () -> Void
 
     init(
@@ -34,37 +34,47 @@ struct ReflectMomentView: View {
     var body: some View {
         VStack(spacing: 16) {
             header
-
-            switch viewModel.step {
-            case .selectMoment:
-                Spacer()
-                momentSelectionContent
-                Spacer()
-
-            case .question:
-                GeometryReader { proxy in
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            Color.clear
-                                .frame(height: proxy.size.height * questionTopGapRatio)
-                            questionContent
-                            Spacer(minLength: 0)
-                        }
-                        .frame(minHeight: proxy.size.height)
-                    }
-                }
-
-            case .completed:
-                Spacer()
-                EmptyView()
-                Spacer()
-            }
+            content
+            bottomBar
         }
         .padding()
+        .confirmationDialog(
+            "Apakah Anda yakin ingin membatalkan refleksi ini?",
+            isPresented: $showCancelConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Batalkan Refleksi", role: .destructive) {
+                onClose()
+            }
+        }
         .task {
             viewModel.seedQuestionsIfNeeded()
             viewModel.loadQuestions()
             viewModel.loadMoments()
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.step {
+        case .selectMoment:
+            momentSelectionContent
+
+        case .question:
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Color.clear
+                            .frame(height: proxy.size.height * questionTopGapRatio)
+                        questionContent
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: proxy.size.height)
+                }
+            }
+
+        case .completed:
+            Spacer()
         }
     }
 
@@ -73,52 +83,28 @@ struct ReflectMomentView: View {
     private var header: some View {
         NavigationHeaderBar(
             title: "Refleksi Hari ini",
-            leadingIcon: leadingIcon,
-            onLeadingTap: handleLeadingTap,
-            trailingIcon: trailingIcon,
-            trailingColor: trailingColor,
-            trailingForegroundColor: trailingForegroundColor,
-            isTrailingEnabled: isTrailingEnabled,
-            onTrailingTap: handleTrailingTap,
+            leadingIcon: "xmark",
+            onLeadingTap: { showCancelConfirmation = true },
+            trailingIcon: "checkmark",
+            trailingColor: .blue,
+            trailingForegroundColor: .white,
+            isTrailingEnabled: isSaveEnabled,
+            onTrailingTap: handleSave,
             progressCurrent: progressCurrent,
             progressTotal: progressTotal
         )
     }
 
-    private var leadingIcon: String {
-        viewModel.step == .selectMoment ? "xmark" : "chevron.left"
+    // save hanya aktif di halaman pertanyaan terakhir dan semua wajib sudah terjawab
+    private var isSaveEnabled: Bool {
+        viewModel.step == .question
+            && viewModel.isLastQuestionPage
+            && viewModel.isCurrentQuestionPageComplete
     }
 
-    private var trailingIcon: String {
-        if viewModel.step == .question, viewModel.isLastQuestionPage {
-            return "checkmark"
-        }
-        return "chevron.right"
-    }
-
-    private var trailingColor: Color {
-        if viewModel.step == .question, viewModel.isLastQuestionPage {
-            return .blue
-        }
-        return Color(.systemGray6)
-    }
-
-    private var trailingForegroundColor: Color {
-        if viewModel.step == .question, viewModel.isLastQuestionPage {
-            return .white
-        }
-        return .primary
-    }
-
-    private var isTrailingEnabled: Bool {
-        switch viewModel.step {
-        case .selectMoment:
-            return viewModel.canProceedFromMomentSelection
-        case .question:
-            return viewModel.isCurrentQuestionPageComplete
-        case .completed:
-            return false
-        }
+    private func handleSave() {
+        viewModel.saveReflection()
+        onClose()
     }
 
     private var progressCurrent: Int {
@@ -136,28 +122,60 @@ struct ReflectMomentView: View {
         1 + viewModel.visiblePages.count
     }
 
-    private func handleLeadingTap() {
-        switch viewModel.step {
-        case .selectMoment:
-            onClose()
-        case .question:
-            viewModel.goToPreviousQuestionPage()
-        case .completed:
-            onClose()
+    // MARK: bottom navigation (Selanjutnya / Kembali)
+
+    @ViewBuilder
+    private var bottomBar: some View {
+        VStack(spacing: 12) {
+            if showPrimaryButton {
+                Button(action: handlePrimaryTap) {
+                    Text("Selanjutnya")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(isPrimaryEnabled ? Color.blue : Color(.systemGray4))
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .disabled(!isPrimaryEnabled)
+            }
+
+            if viewModel.step == .question {
+                Button("Kembali", action: viewModel.goToPreviousQuestionPage)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
-    private func handleTrailingTap() {
+    private var showPrimaryButton: Bool {
+        switch viewModel.step {
+        case .selectMoment:
+            return true
+        case .question:
+            return !viewModel.isLastQuestionPage
+        case .completed:
+            return false
+        }
+    }
+
+    private var isPrimaryEnabled: Bool {
+        switch viewModel.step {
+        case .selectMoment:
+            return viewModel.canProceedFromMomentSelection
+        case .question:
+            return viewModel.isCurrentQuestionPageComplete
+        case .completed:
+            return false
+        }
+    }
+
+    private func handlePrimaryTap() {
         switch viewModel.step {
         case .selectMoment:
             viewModel.proceedToQuestions()
         case .question:
-            if viewModel.isLastQuestionPage {
-                viewModel.saveReflection()
-                onClose()
-            } else {
-                viewModel.goToNextQuestionPage()
-            }
+            viewModel.goToNextQuestionPage()
         case .completed:
             break
         }
@@ -174,7 +192,7 @@ struct ReflectMomentView: View {
         }
     }
 
-    // MARK: TEC-211: show all moments logged that day (carousel)
+    // MARK: TEC-211: show all moments logged that day (grid)
 
     private var momentPickerView: some View {
         VStack(spacing: 28) {
@@ -188,44 +206,30 @@ struct ReflectMomentView: View {
                     .foregroundStyle(.secondary)
             }
 
-            momentCarousel
+            momentGrid
         }
     }
 
-    // carousel horizontal, kartu di tengah otomatis lebih besar
-    private var momentCarousel: some View {
-        let cardWidth: CGFloat = 210
-        let cardHeight: CGFloat = 300
-        let spacing: CGFloat = 28
+    private var momentGrid: some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
 
-        return GeometryReader { geometry in
-            let sideInset = (geometry.size.width - cardWidth) / 2
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: spacing) {
-                    ForEach(viewModel.moments, id: \.persistentModelID) { moment in
-                        SelectableMomentCard(
-                            moment: moment,
-                            isSelected: viewModel.selectedMoment?.persistentModelID == moment.persistentModelID
-                        )
-                        .frame(width: cardWidth, height: cardHeight)
-                        .contentShape(RoundedRectangle(cornerRadius: 16))
-                        .scrollTransition(axis: .horizontal) { content, phase in
-                            content
-                                .scaleEffect(phase.isIdentity ? 1.0 : 0.9)
-                                .opacity(phase.isIdentity ? 1 : 0.6)
-                        }
-                        .onTapGesture {
-                            viewModel.select(moment)
-                        }
+        return ScrollView {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(viewModel.moments, id: \.persistentModelID) { moment in
+                    SelectableMomentCard(
+                        moment: moment,
+                        isSelected: viewModel.selectedMoment?.persistentModelID == moment.persistentModelID
+                    )
+                    .aspectRatio(0.75, contentMode: .fit)
+                    .contentShape(RoundedRectangle(cornerRadius: 16))
+                    .onTapGesture {
+                        viewModel.select(moment)
                     }
                 }
-                .scrollTargetLayout()
-                .padding(.horizontal, sideInset)
             }
-            .scrollTargetBehavior(.viewAligned)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 4)
         }
-        .frame(height: cardHeight)
     }
 
     // MARK: TEC-213: empty state
