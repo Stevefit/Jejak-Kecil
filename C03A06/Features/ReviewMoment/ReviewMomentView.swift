@@ -7,6 +7,7 @@ struct ReviewMomentView: View {
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
     @State private var showingReflectMoment = false
+    @AppStorage("shouldShowCreateMomentFromWidget") private var shouldShowCreateMomentFromWidget = false
     
     var body: some View {
         NavigationStack {
@@ -129,6 +130,10 @@ struct ReviewMomentView: View {
             .onAppear {
                 viewModel.modelContext = modelContext
                 viewModel.fetchData()
+                showCreateMomentIfNeeded()
+            }
+            .onChange(of: shouldShowCreateMomentFromWidget) { _, _ in
+                showCreateMomentIfNeeded()
             }
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarHistoryView()
@@ -147,6 +152,13 @@ struct ReviewMomentView: View {
                 )
             }
         }
+    }
+
+    private func showCreateMomentIfNeeded() {
+        guard shouldShowCreateMomentFromWidget else { return }
+
+        shouldShowCreateMomentFromWidget = false
+        showingCreateMoment = true
     }
 }
 
