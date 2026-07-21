@@ -4,6 +4,7 @@
 //
 //  Created by Steve on 21/07/26.
 //
+
 import Foundation
 import SwiftData
 
@@ -23,4 +24,5 @@ class Parent {
         self.parentRole = parentRole
     }
 }
+
 
