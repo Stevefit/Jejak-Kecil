@@ -26,7 +26,7 @@ struct PrimaryButton: View {
     }
 }
 
-// tombol sekunder (teks biasa),contoh: "Kembali"
+// tombol sekunder (teks biasa), contoh: "Kembali"
 struct SecondaryButton: View {
     let title: String
     let action: () -> Void
@@ -48,7 +48,7 @@ struct CloseButton: View {
     }
 }
 
-// tombol save 
+// tombol save
 struct SaveButton: View {
     var icon: String = "checkmark"
     var isEnabled: Bool = true
