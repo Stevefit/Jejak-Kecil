@@ -32,6 +32,14 @@ struct ReflectMomentView: View {
     // MARK: body
 
     var body: some View {
+        if viewModel.step == .completed, let reflection = viewModel.savedReflection {
+            ReflectionSavedView(reflection: reflection, onClose: onClose)
+        } else {
+            reflectionFlow
+        }
+    }
+
+    private var reflectionFlow: some View {
         VStack(spacing: 16) {
             header
             content
@@ -104,7 +112,6 @@ struct ReflectMomentView: View {
 
     private func handleSave() {
         viewModel.saveReflection()
-        onClose()
     }
 
     private var progressCurrent: Int {
@@ -315,6 +322,124 @@ struct ReflectMomentView: View {
     }
 }
 
+// MARK: animation save reflection
+
+private struct ReflectionSavedView: View {
+
+    let reflection: Reflection
+    let onClose: () -> Void
+
+    private let autoDismissSeconds: Double = 3
+
+    // MARK: animasi state
+    @State private var showTitle = false
+    @State private var showCard = false
+    @State private var pulsing = false
+    @State private var showButton = false
+
+    private var cardScale: CGFloat {
+        guard showCard else { return 0.01 }
+        return pulsing ? 0.94 : 0.92
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+            
+            ConfettiBlast(fireDelay: 0.22)
+
+            VStack(spacing: 28) {
+                Text("Refleksi Tersimpan!")
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+                    .opacity(showTitle ? 1 : 0)
+                    .offset(y: showTitle ? 0 : -24)
+
+                ReflectionCard(reflection: reflection)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+                    .scaleEffect(cardScale)   // kecil di tengah -> maju & membesar
+                    .opacity(showCard ? 1 : 0)
+
+                closeButton
+                    .opacity(showButton ? 1 : 0)
+                    .scaleEffect(showButton ? 1 : 0.6)
+            }
+        }
+        .onAppear(perform: runAnimation)
+        .task {
+            try? await Task.sleep(for: .seconds(autoDismissSeconds))
+            onClose()
+        }
+    }
+
+    // MARK: tombol close
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(Color(.systemBackground)))
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: koreografi animasi
+
+    private func runAnimation() {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.65).delay(0.05)) {
+            showTitle = true
+        }
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.55).delay(0.08)) {
+            showCard = true
+        }
+        withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.5)) {
+            pulsing = true
+        }
+        withAnimation(.easeIn(duration: 0.2).delay(0.45)) {
+            showButton = true
+        }
+    }
+}
+
+// MARK: confetti blast
+
+private struct ConfettiBlast: View {
+
+    var fireDelay: Double = 0
+
+    @State private var burst = false
+    @State private var faded = false
+
+    private var blastScale: CGFloat {
+        if faded { return 1.9 }
+        return burst ? 1.4 : 0.15
+    }
+
+    var body: some View {
+        Image("Confetti")
+            .resizable()
+            .scaledToFill()
+            .scaleEffect(blastScale)
+            .opacity(faded ? 0 : (burst ? 1 : 0))
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.13).delay(fireDelay)) {
+                    burst = true
+                }
+                withAnimation(.easeIn(duration: 0.18).delay(fireDelay + 0.13)) {
+                    faded = true
+                }
+            }
+    }
+}
+
 // MARK: preview helper: bikin data foto dummy
 
 private func dummyPhotoData(color: UIColor) -> Data {
@@ -327,9 +452,9 @@ private func dummyPhotoData(color: UIColor) -> Data {
     return image.pngData() ?? Data()
 }
 
-// MARK: preview TEC-211, carousel dengan beberapa moment
+// MARK: preview TEC-211, grid dengan beberapa moment
 
-#Preview("TEC-211: Carousel Beberapa Momen") {
+#Preview("TEC-211: Grid Beberapa Momen") {
     let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
@@ -371,4 +496,33 @@ private func dummyPhotoData(color: UIColor) -> Data {
         onClose: {}
     )
     .modelContainer(container)
+}
+
+// MARK: preview TEC-287, animation reflection
+
+#Preview("Animation Reflection") {
+    let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+
+    let moment = Moment(
+        photo: dummyPhotoData(color: .systemOrange),
+        timestamp: .now,
+        shortDescription: "Main bikin rumah-rumahan sama Lili.",
+        category: .bermainBersama
+    )
+    let reflection = Reflection(date: .now, moment: moment, isCompleted: true)
+
+    let q4 = Question(code: "Q4", scope: .daily, answerType: .chip, text: "Perasaan?", displayOrder: 5)
+    let q6 = Question(code: "Q6", scope: .daily, answerType: .essay, text: "Perbedaan?", displayOrder: 8)
+    reflection.answers = [
+        Answer(question: q4, selectedChip: "Hangat", reflection: reflection),
+        Answer(question: q6, essayText: "Momen ini terasa hangat dan mengalir.", reflection: reflection)
+    ]
+
+    container.mainContext.insert(moment)
+    container.mainContext.insert(reflection)
+
+    return ReflectionSavedView(reflection: reflection, onClose: {})
+        .modelContainer(container)
 }
