@@ -6,6 +6,7 @@ struct ReviewMomentView: View {
     @State private var viewModel = ReviewMomentViewModel()
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
+    @State private var showingReflectMoment = false
     
     var body: some View {
         NavigationStack {
@@ -58,7 +59,7 @@ struct ReviewMomentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 14) {
                                 ForEach(viewModel.moments) { moment in
-                                    NavigationLink(destination: MomentDetailView(allDayMoments: viewModel.moments, initialMoment: moment)) {
+                                    NavigationLink(destination: MomentDetailView(allDayMoments: viewModel.moments, initialMoment: moment, viewModel: viewModel)) {
                                         MomentCard(moment: moment)
                                     }
                                 }
@@ -89,7 +90,7 @@ struct ReviewMomentView: View {
                             ReflectionCard(reflection: reflection)
                         } else {
                             VStack(spacing: 16) {
-                                Button(action: {}) {
+                                Button(action: {showingReflectMoment = true}) {
                                     Image(systemName: "plus")
                                         .font(.title2)
                                         .foregroundColor(.black)
@@ -133,6 +134,14 @@ struct ReviewMomentView: View {
                 viewModel.fetchData()
             }) {
                 CreateMomentView()
+            }
+            .sheet(isPresented: $showingReflectMoment, onDismiss: {
+                viewModel.fetchData()
+            }) {
+                ReflectMomentView(
+                    modelContext: modelContext,
+                    onClose: { showingReflectMoment = false }
+                )
             }
         }
     }
