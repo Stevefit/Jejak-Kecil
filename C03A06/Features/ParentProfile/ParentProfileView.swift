@@ -20,15 +20,19 @@ struct ParentProfileView: View {
                         .font(.largeTitle)
                     Text("GENDER ORANG TUA")
                         .font(.body)
-                }.padding()
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 35)
                 VStack(alignment: .leading,spacing : 8){
                     Text("Daftar lencana")
                         .font(.headline)
                     BadgeGridView()
-                }.padding()
+                }
+                .padding(.horizontal, 20)
             }
-        }.navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
+        }
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
     
