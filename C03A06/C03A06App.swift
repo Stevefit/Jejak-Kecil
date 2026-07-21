@@ -32,7 +32,7 @@ struct C03A06App: App {
         }
         .modelContainer(sharedModelContainer)
     }
-    init (){ print(URL.applicationSupportDirectory.path(percentEncoded: false))   }
+   
     
     @MainActor
        private func seedQuestionsIfNeeded() async {
