@@ -2,9 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct EditMomentView: View {
-    @Environment(\.modelContext) private var modelContext
     var moment: Moment
     @Binding var isPresented: Bool
+    var viewModel: ReviewMomentViewModel
 
     @State private var descriptionInput: String
     @State private var dateInput: Date
@@ -14,9 +14,10 @@ struct EditMomentView: View {
     @State private var showingImagePicker = false
     @State private var imageSourceType: UIImagePickerController.SourceType = .photoLibrary
 
-    init(moment: Moment, isPresented: Binding<Bool>) {
+    init(moment: Moment, isPresented: Binding<Bool>, viewModel: ReviewMomentViewModel) {
         self.moment = moment
         self._isPresented = isPresented
+        self.viewModel = viewModel
         self._descriptionInput = State(initialValue: moment.shortDescription)
         self._dateInput = State(initialValue: moment.timestamp)
         self._photoDataInput = State(initialValue: moment.photo)
@@ -84,13 +85,12 @@ struct EditMomentView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: {
-                        moment.shortDescription = descriptionInput
-                        moment.timestamp = dateInput
-                        if let selectedPhoto = photoDataInput {
-                            moment.photo = selectedPhoto
-                        }
-                        
-                        try? modelContext.save()
+                        viewModel.updateMoment(
+                            moment,
+                            withDescription: descriptionInput,
+                            date: dateInput,
+                            photoData: photoDataInput
+                        )
                         isPresented = false
                     }) {
                         Image(systemName: "checkmark")
