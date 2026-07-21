@@ -51,7 +51,7 @@ final class Answer {
 
     // cuma salah satu (reflection ATAU recap) yang terisi per instance.
     var reflection: Reflection?
-    //var recap: Recap?
+    var recap: Recap?
 
     init(
         question: Question,
@@ -60,7 +60,7 @@ final class Answer {
         selectedChip: String? = nil,
         essayText: String? = nil,
         reflection: Reflection? = nil,
-        //recap: Recap? = nil
+        recap: Recap? = nil
     ) {
         self.question = question
         self.answeredAt = answeredAt
@@ -68,6 +68,6 @@ final class Answer {
         self.selectedChip = selectedChip
         self.essayText = essayText
         self.reflection = reflection
-        //self.recap = recap
+        self.recap = recap
     }
 }
