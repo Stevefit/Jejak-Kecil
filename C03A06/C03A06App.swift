@@ -1,8 +1,13 @@
 import SwiftUI
 import SwiftData
+import AppIntents
 
 @main
 struct C03A06App: App {
+
+    init() {
+        MomentAppShortcuts.updateAppShortcutParameters()
+    }
     var sharedModelContainer: ModelContainer = {
         //model di database
         let schema = Schema([
@@ -30,8 +35,7 @@ struct C03A06App: App {
                     await seedQuestionsIfNeeded()
                 }
         }
-        .modelContainer(sharedModelContainer)
-    }
+        .modelContainer(AppModelContainer.shared)    }
    
     
     @MainActor
