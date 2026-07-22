@@ -43,6 +43,7 @@ struct ReflectMomentView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 progressBar
+                    .padding(.top, 31)
                 content
                 bottomBar
             }
@@ -56,15 +57,16 @@ struct ReflectMomentView: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 4) {
                         Text("Refleksi Hari ini")
                             .font(.headline)
                         if progressTotal > 0 {
                             Text("\(progressCurrent) dari \(progressTotal)")
-                                .font(.caption)
+                                .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .padding(.top, 34)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     SaveButton(isEnabled: isSaveEnabled, action: handleSave)
