@@ -1,16 +1,9 @@
-//
-//  ReflectionCard.swift
-//  C03A06
-//
-//  Created by Axel Valerio Ertamto on 18/07/26.
-//
-
-
 import SwiftUI
 import SwiftData
 
 struct ReflectionCard: View {
     let reflection: Reflection
+    var onEdit: (() -> Void)? = nil
     
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -20,130 +13,111 @@ struct ReflectionCard: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // MARK: Image Section
-            Group {
-                if let moment = reflection.moment, let uiImage = UIImage(data: moment.photo) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    ZStack {
-                        Color(.systemGray4)
-                        Image(systemName: "photo")
-                            .foregroundColor(.white)
+        VStack(alignment: .leading, spacing: 16) {
+            ZStack(alignment: .bottomTrailing) {
+                GeometryReader { geometry in
+                    Group {
+                        if let moment = reflection.moment, let uiImage = UIImage(data: moment.photo) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geometry.size.width, height: geometry.size.height)
+                                .clipped()
+                        } else {
+                            ZStack {
+                                Color(.systemGray4)
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                        }
                     }
                 }
-            }
-            .frame(width: 160, height: 220)
-            .cornerRadius(16)
-            .clipped()
-            
-            // MARK: Content Section
-            VStack(alignment: .leading, spacing: 8) {
-                // Category & Date Header
-                Text("\(formattedDate): \(reflection.moment?.category.rawValue ?? "")")
-                    .font(.caption2)
-                    .foregroundColor(.black.opacity(0.8))
-                    .lineLimit(1)
+                .frame(height: 320)
+                .cornerRadius(16)
                 
-                // Description
+                Button(action: {
+                    onEdit?()
+                }) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.black)
+                        .frame(width: 44, height: 44)
+                        .background(Color.white)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                }
+                .padding(14)
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                if let category = reflection.moment?.category {
+                    Text(category.rawValue)
+                        .font(.caption)
+                }
+                
                 Text(reflection.moment?.shortDescription ?? "")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .font(.title3.weight(.bold))
+                    .foregroundColor(.primary)
                     .lineLimit(2)
-                    .multilineTextAlignment(.leading)
                 
-                // Chip (Q4 - Feeling option)
-                if let q4Answer = reflection.answers.first(where: { $0.question.code == "Q4" }),
-                   let chipText = q4Answer.selectedChip {
-                    Text(chipText)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.yellow.opacity(0.4))
-                        .clipShape(Capsule())
+                let q4Answer = reflection.answers.first(where: { $0.question.code == "Q4" })
+                let q6Answer = reflection.answers.first(where: { $0.question.code == "Q6" })
+                
+                if q4Answer?.selectedChip != nil || q6Answer?.essayText != nil {
+                    HStack(alignment: .center, spacing: 10) {
+                        if let chipText = q4Answer?.selectedChip {
+                            Text(chipText)
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(Color.yellow.opacity(0.35))
+                                .clipShape(Capsule())
+                        }
+                        
+                        if let q6Text = q6Answer?.essayText, !q6Text.isEmpty {
+                            Text(q6Text)
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                                .lineLimit(2)
+                        }
+                    }
+                    .padding(.top, 2)
                 }
                 
-                // Q6 - Essay Option (Moment differences text)
-                if let q6Answer = reflection.answers.first(where: { $0.question.code == "Q6" }),
-                   let essayText = q6Answer.essayText {
-                    Text(essayText)
-                        .font(.caption)
-                        .foregroundColor(.black)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                // Quote Section (FQ1 or FQ2 follow-ups dynamically if available)
                 if let followUpAnswer = reflection.answers.first(where: { $0.question.isFollowUp }),
-                   let followUpText = followUpAnswer.essayText {
-                    Text("“\(followUpText)”")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.black)
-                        .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
+                   let rawQuote = followUpAnswer.essayText,
+                   !rawQuote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    
+                    let limitedQuote = String(rawQuote.prefix(120))
+                    
+                    HStack {
+                        Text("“\(limitedQuote)”")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.primary)
+                            .lineSpacing(3)
+                            .lineLimit(3)
+                            .multilineTextAlignment(.leading)
+                        
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray6).opacity(0.7))
+                    .cornerRadius(16)
+                    .padding(.top, 4)
                 }
-                
-                Spacer()
             }
-            .padding(.vertical, 4)
-            
-            Spacer()
+            .padding(.horizontal, 16)
+            .padding(.bottom, 14)
         }
-        .padding(12)
+        .padding(7)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
-}
-
-#Preview {
-    let schema = Schema([
-        Item.self,
-        Moment.self,
-        Reflection.self,
-        Answer.self,
-        Question.self,
-        Choice.self
-    ])
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-    
-    // 1. Create dummy image data
-    let dummyImage = UIImage(systemName: "photo")?.jpegData(compressionQuality: 1.0) ?? Data()
-    
-    // 2. Instantiate core models
-    let moment = Moment(
-        photo: dummyImage,
-        timestamp: Date(),
-        shortDescription: "Main bikin rumah-rumahan sama Lili.",
-        category: .bermainBersama
-    )
-    
-    let reflection = Reflection(date: Date(), moment: moment, isCompleted: true)
-    
-    // 3. Create mock questions and map answers matching the UI layout
-    let q4 = Question(code: "Q4", scope: .daily, answerType: .chip, text: "Perasaan apa?", displayOrder: 5)
-    let q6 = Question(code: "Q6", scope: .daily, answerType: .essay, text: "Apa perbedaan momen?", displayOrder: 8)
-    let fq1 = Question(code: "FQ1", scope: .daily, answerType: .essay, text: "Hal kecil besok?", displayOrder: 2, triggerQuestionCode: "Q1")
-    
-    let a4 = Answer(question: q4, selectedChip: "Hangat", reflection: reflection)
-    let a6 = Answer(question: q6, essayText: "Momen ini terasa hangat dan mengalir.", reflection: reflection)
-    let afq1 = Answer(question: fq1, essayText: "Clara yang mulai untuk bermain lego", reflection: reflection)
-    
-    reflection.answers = [a4, a6, afq1]
-    
-    // 4. Insert into context to satisfy SwiftData tracking requirements
-    container.mainContext.insert(moment)
-    container.mainContext.insert(reflection)
-    
-    return ReflectionCard(reflection: reflection)
-        .modelContainer(container)
-        .background(Color(.systemGray6))
 }
