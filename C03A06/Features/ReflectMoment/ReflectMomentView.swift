@@ -40,25 +40,50 @@ struct ReflectMomentView: View {
     }
 
     private var reflectionFlow: some View {
-        VStack(spacing: 16) {
-            header
-            content
-            bottomBar
-        }
-        .padding()
-        .confirmationDialog(
-            "Apakah Anda yakin ingin membatalkan refleksi ini?",
-            isPresented: $showCancelConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Batalkan Refleksi", role: .destructive) {
-                onClose()
+        NavigationStack {
+            VStack(spacing: 16) {
+                progressBar
+                content
+                bottomBar
             }
-        }
-        .task {
-            viewModel.seedQuestionsIfNeeded()
-            viewModel.loadQuestions()
-            viewModel.loadMoments()
+            .padding(.horizontal)
+            .padding(.bottom)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    CloseButton {
+                        showCancelConfirmation = true
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 2) {
+                        Text("Refleksi Hari ini")
+                            .font(.headline)
+                        if progressTotal > 0 {
+                            Text("\(progressCurrent) dari \(progressTotal)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    SaveButton(isEnabled: isSaveEnabled, action: handleSave)
+                }
+            }
+            .confirmationDialog(
+                "Apakah Anda yakin ingin membatalkan refleksi ini?",
+                isPresented: $showCancelConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Batalkan Refleksi", role: .destructive) {
+                    onClose()
+                }
+            }
+            .task {
+                viewModel.seedQuestionsIfNeeded()
+                viewModel.loadQuestions()
+                viewModel.loadMoments()
+            }
         }
     }
 
@@ -86,21 +111,19 @@ struct ReflectMomentView: View {
         }
     }
 
-    // MARK: header
+    // MARK: progress bar
 
-    private var header: some View {
-        NavigationHeaderBar(
-            title: "Refleksi Hari ini",
-            leadingIcon: "xmark",
-            onLeadingTap: { showCancelConfirmation = true },
-            trailingIcon: "checkmark",
-            trailingColor: .blue,
-            trailingForegroundColor: .white,
-            isTrailingEnabled: isSaveEnabled,
-            onTrailingTap: handleSave,
-            progressCurrent: progressCurrent,
-            progressTotal: progressTotal
-        )
+    @ViewBuilder
+    private var progressBar: some View {
+        if progressTotal > 0 {
+            HStack(spacing: 6) {
+                ForEach(0..<progressTotal, id: \.self) { index in
+                    Capsule()
+                        .fill(index < progressCurrent ? Color.accentColor : Color(.systemGray5))
+                        .frame(height: 5)
+                }
+            }
+        }
     }
 
     // save hanya aktif di halaman pertanyaan terakhir dan semua wajib sudah terjawab
@@ -133,24 +156,17 @@ struct ReflectMomentView: View {
 
     @ViewBuilder
     private var bottomBar: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             if showPrimaryButton {
-                Button(action: handlePrimaryTap) {
-                    Text("Selanjutnya")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(isPrimaryEnabled ? Color.blue : Color(.systemGray4))
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-                .disabled(!isPrimaryEnabled)
+                PrimaryButton(
+                    title: "Selanjutnya",
+                    isEnabled: isPrimaryEnabled,
+                    action: handlePrimaryTap
+                )
             }
 
             if viewModel.step == .question {
-                Button("Kembali", action: viewModel.goToPreviousQuestionPage)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                SecondaryButton(title: "Kembali", action: viewModel.goToPreviousQuestionPage)
             }
         }
     }
@@ -195,25 +211,24 @@ struct ReflectMomentView: View {
         if viewModel.isEmptyState {
             emptyStateView
         } else {
-            momentPickerView
+            VStack(spacing: 28) {
+                momentPickerHeader
+                momentGrid
+            }
+            .padding(.top, 24)
         }
     }
 
     // MARK: TEC-211: show all moments logged that day (grid)
 
-    private var momentPickerView: some View {
-        VStack(spacing: 28) {
+    private var momentPickerHeader: some View {
+        VStack(spacing: 5) {
+            Text("Pilih Momen Hari Ini")
+                .font(.title3.weight(.semibold))
 
-            VStack(spacing: 6) {
-                Text("Pilih Momen Hari Ini")
-                    .font(.title3.weight(.semibold))
-
-                Text("Momen mana yang mau diceritakan?")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-            }
-
-            momentGrid
+            Text("Momen mana yang mau diceritakan?")
+                .font(.body)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -244,14 +259,14 @@ struct ReflectMomentView: View {
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 40))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
             Text("Belum ada momen yang tercatat hari ini")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: TEC-214: tampilan halaman pertanyaan (baca state dari ViewModel)
