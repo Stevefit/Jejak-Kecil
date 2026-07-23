@@ -32,7 +32,6 @@ struct RecapMomentView: View {
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             
             //MARK: Step Progress Bar + sticky header WQ1
-            //TODO: Make this stay in its position , and not interrupted by scrolling
             .safeAreaInset(edge: .top) {
                 VStack{
                     StepProgressBar(current: currentPage, total: totalPage)
