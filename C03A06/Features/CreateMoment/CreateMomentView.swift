@@ -82,7 +82,6 @@ struct CreateMomentView: View {
                         Button("Batalkan Perubahan", role: .destructive) {
                             dismiss()
                         }
-                        Button("Kembali", role: .cancel) { }
                     }
                     .interactiveDismissDisabled(viewModel.hasChanges)
                 }

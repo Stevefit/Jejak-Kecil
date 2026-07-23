@@ -9,18 +9,18 @@ import SwiftData
 
 struct RecapMomentView: View {
     @Environment(\.dismiss) private var dismiss
-
+    
     @State private var viewModel: RecapMomentViewModel
     @State private var currentPage: Int = 1
     @State private var showCancelAlert: Bool = false
-
+    
     private let totalPage: Int = 2
     private let gridColumns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
-
+    
     init(modelContext: ModelContext, date: Date = .now) {
         _viewModel = State(initialValue: RecapMomentViewModel(modelContext: modelContext, date: date))
     }
-
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -30,24 +30,20 @@ struct RecapMomentView: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
-
+            
             //MARK: Step Progress Bar + sticky header WQ1
-            //TODO: Make this stay in its position , and not interrupted by scrolling 
+            //TODO: Make this stay in its position , and not interrupted by scrolling
             .safeAreaInset(edge: .top) {
                 VStack{
                     StepProgressBar(current: currentPage, total: totalPage)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 20)
                     if currentPage == 1 { wq1Header }
                 }
                 .padding(.horizontal, 25)
                 .background(Color(uiColor: .systemGroupedBackground))
             }
-
-            //MARK: Titl
-            .navigationTitle("Refleksi Mingguan")
-            .navigationSubtitle(Text("\(currentPage) dari \(totalPage)"))
             .navigationBarTitleDisplayMode(.inline)
-
+            
             // MARK: TOOL BAR
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -66,6 +62,16 @@ struct RecapMomentView: View {
                         Button("Batalkan", role: .destructive) { dismiss() }
                     }
                 }
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 4) {
+                        Text("Refleksi Mingguan")
+                            .font(.headline)
+                            .padding(.top)
+                        
+                        Text("\(currentPage) dari \(totalPage)")
+                            .font(.footnote)
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Simpan", systemImage: "checkmark") {
                         if viewModel.saveRecap() { dismiss() }
@@ -75,7 +81,7 @@ struct RecapMomentView: View {
                 }
             }
             .interactiveDismissDisabled(viewModel.hasChanges)
-
+            
             //MARK: Bottom navigation
             .safeAreaInset(edge: .bottom) {
                 if currentPage == 1 {
@@ -85,7 +91,7 @@ struct RecapMomentView: View {
                         action: { currentPage = 2 }
                     )
                 } else {
-                    TextLinkButton(title: "Kembali") { currentPage = 1 }
+                    SecondaryButton(title: "Kembali") { currentPage = 1 }
                         .padding(.bottom)
                 }
             }
@@ -96,18 +102,20 @@ struct RecapMomentView: View {
             }
         }
     }
-
+    
     // MARK: WQ1 — header (sticky di bawah progress bar)
     private var wq1Header: some View {
         VStack(spacing: 6) {
             Text("Pilih Refleksi Minggu Ini")
                 .font(.headline)
+                .fontWeight(.semibold)
             Text("Momen apa yang paling berkesan bagi Anda minggu ini?")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
-        }.padding(.vertical, 20)
+        }
+        .padding(.vertical, 20)
     }
-
+    
     // MARK: WQ1 — pilih refleksi minggu ini
     private var wq1Content: some View {
         LazyVGrid(columns: gridColumns, spacing: 16) {
@@ -121,7 +129,7 @@ struct RecapMomentView: View {
         }
         .padding()
     }
-
+    
     // MARK: WQ2 — jawaban essay
     @ViewBuilder
     private var wq2Content: some View {
@@ -129,7 +137,7 @@ struct RecapMomentView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(question.text)
                     .font(.headline)
-
+                
                 TextField(
                     "Maksimal \(RecapMomentViewModel.essayMaxLength) karakter",
                     text: $viewModel.essayText,
@@ -153,17 +161,22 @@ struct RecapMomentView: View {
     let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self, Recap.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
-
+    
     let renderer = UIGraphicsImageRenderer(size: CGSize(width: 160, height: 160))
     let dummyImage = renderer.jpegData(withCompressionQuality: 1.0) { context in
-        UIColor.systemTeal.setFill()
+        UIColor.systemOrange.setFill()
         context.fill(CGRect(x: 0, y: 0, width: 160, height: 160))
     }
     for i in 0..<6 {
         let moment = Moment(photo: dummyImage, timestamp: .now, shortDescription: "Main bikin rumah-rumahan sama Lili \(i)", category: .bermainBersama)
         container.mainContext.insert(Reflection(date: .now, moment: moment, isCompleted: true))
     }
-
-    return RecapMomentView(modelContext: container.mainContext)
+    
+    return Color(.systemGray5)
+        .sheet(isPresented: .constant(true)) {
+            RecapMomentView(modelContext: container.mainContext)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+        }
         .modelContainer(container)
 }
