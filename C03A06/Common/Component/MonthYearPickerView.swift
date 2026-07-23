@@ -1,38 +1,43 @@
-//
-//  MonthYearPickerView.swift
-//  C03A06
-//
-//  Created by Axel Valerio Ertamto on 21/07/26.
-//
-
-
-//
-//  MonthYearPickerView.swift
-//  C03A06
-//
-
 import SwiftUI
 
 struct MonthYearPickerView: View {
     @Binding var selectedDate: Date
 
     private var calendar: Calendar { Calendar.current }
-    
-    // Indonesian month names (or locale-based)
+    private var now: Date { Date() }
+
     private var months: [String] {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "id_ID")
         return formatter.standaloneMonthSymbols
     }
-    
-    // Year range
+
+    private var currentYear: Int {
+        calendar.component(.year, from: now)
+    }
+
+    private var currentMonthIndex: Int {
+        calendar.component(.month, from: now) - 1
+    }
+
     private var years: [Int] {
-        Array(2020...2035)
+        Array(2020...currentYear)
+    }
+
+    private var availableMonthsCount: Int {
+        if selectedYear.wrappedValue == currentYear {
+            return currentMonthIndex + 1
+        } else {
+            return months.count
+        }
     }
 
     private var selectedMonth: Binding<Int> {
         Binding(
-            get: { calendar.component(.month, from: selectedDate) - 1 },
+            get: {
+                let month = calendar.component(.month, from: selectedDate) - 1
+                return min(month, availableMonthsCount - 1)
+            },
             set: { newMonth in
                 updateDate(month: newMonth + 1, year: selectedYear.wrappedValue)
             }
@@ -41,9 +46,17 @@ struct MonthYearPickerView: View {
 
     private var selectedYear: Binding<Int> {
         Binding(
-            get: { calendar.component(.year, from: selectedDate) },
+            get: {
+                let year = calendar.component(.year, from: selectedDate)
+                return min(year, currentYear)
+            },
             set: { newYear in
-                updateDate(month: selectedMonth.wrappedValue + 1, year: newYear)
+                let targetYear = min(newYear, currentYear)
+                var targetMonth = selectedMonth.wrappedValue
+                if targetYear == currentYear {
+                    targetMonth = min(targetMonth, currentMonthIndex)
+                }
+                updateDate(month: targetMonth + 1, year: targetYear)
             }
         )
     }
@@ -51,7 +64,7 @@ struct MonthYearPickerView: View {
     var body: some View {
         HStack {
             Picker("Bulan", selection: selectedMonth) {
-                ForEach(0..<months.count, id: \.self) { index in
+                ForEach(0..<availableMonthsCount, id: \.self) { index in
                     Text(months[index].capitalized).tag(index)
                 }
             }
@@ -73,7 +86,8 @@ struct MonthYearPickerView: View {
         components.month = month
         components.day = 1
         if let newDate = calendar.date(from: components) {
-            selectedDate = newDate
+            let clampedDate = min(newDate, now)
+            selectedDate = calendar.startOfDay(for: clampedDate)
         }
     }
 }
