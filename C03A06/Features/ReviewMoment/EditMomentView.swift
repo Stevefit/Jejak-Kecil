@@ -2,26 +2,17 @@ import SwiftUI
 import SwiftData
 
 struct EditMomentView: View {
-    var moment: Moment
+    @Bindable var moment: Moment
     @Binding var isPresented: Bool
     var viewModel: ReviewMomentViewModel
 
-    @State private var descriptionInput: String
-    @State private var dateInput: Date
-    @State private var photoDataInput: Data?
+    @State private var descriptionInput: String = ""
+    @State private var dateInput: Date = Date()
+    @State private var photoDataInput: Data? = nil
     
     @State private var showActionSheet = false
     @State private var showingImagePicker = false
     @State private var imageSourceType: UIImagePickerController.SourceType = .photoLibrary
-
-    init(moment: Moment, isPresented: Binding<Bool>, viewModel: ReviewMomentViewModel) {
-        self.moment = moment
-        self._isPresented = isPresented
-        self.viewModel = viewModel
-        self._descriptionInput = State(initialValue: moment.shortDescription)
-        self._dateInput = State(initialValue: moment.timestamp)
-        self._photoDataInput = State(initialValue: moment.photo)
-    }
 
     var body: some View {
         NavigationStack {
@@ -110,6 +101,11 @@ struct EditMomentView: View {
             }
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(sourceType: imageSourceType, selectedImageData: $photoDataInput)
+            }
+            .onAppear {
+                descriptionInput = moment.shortDescription
+                dateInput = moment.timestamp
+                photoDataInput = moment.photo
             }
         }
     }
