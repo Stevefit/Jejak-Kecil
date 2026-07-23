@@ -25,12 +25,9 @@ struct PhotoUploadArea: View {
                         .scaledToFill()
                 } else {
                     VStack(spacing: 8) {
-                        Image(systemName: "camera.fill")
-                            .font(.title)
-                            .foregroundStyle(Color.gray.opacity(0.8))
                         Text("Ambil/Unggah Foto")
-                            .foregroundStyle(Color.gray.opacity(0.8))
-                            .font(.subheadline)
+                            .foregroundStyle(Color.gray)
+                            .font(.headline)
                     }
                 }
             }

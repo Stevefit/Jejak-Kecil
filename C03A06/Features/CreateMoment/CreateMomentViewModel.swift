@@ -14,6 +14,8 @@ final class CreateMomentViewModel {
     
     // MARK: - Properties
     
+    static let maxDescriptionLength = 54
+
     var date: Date = .now  //set tanggal default ke hari ini.
     var description: String = ""
     var selectedCategory: MomentCategory? = nil 
@@ -27,6 +29,13 @@ final class CreateMomentViewModel {
         let isCategoryValid = selectedCategory != nil
         
         return isDescriptionValid && isPhotoValid && isCategoryValid
+    }
+    
+    // Cek apakah ada perubahan/isian di form
+    var hasChanges: Bool {
+        return photoData != nil ||
+        selectedCategory != nil ||
+        !description.isEmpty
     }
     
     // MARK: - Save Function (SwiftData)

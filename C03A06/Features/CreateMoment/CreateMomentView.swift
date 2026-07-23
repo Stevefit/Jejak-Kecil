@@ -8,6 +8,8 @@ struct CreateMomentView: View {
     
     @State private var viewModel = CreateMomentViewModel()
     
+    @State private var showCancelAlert = false
+    
     // States untuk Image Picker
     @State private var showActionSheet = false
     @State private var showingImagePicker = false
@@ -15,71 +17,52 @@ struct CreateMomentView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // MARK: Area Upload Foto
+            Form {
+                // MARK: Area Upload Foto
+                Section {
                     PhotoUploadArea(photoData: viewModel.photoData, action: {showActionSheet = true})
-                    
-                    // MARK: Area Tanggal
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Tanggal")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                        
-                        // Membatasi tanggal agar tidak bisa memilih di masa depan
-                        DatePicker("", selection: $viewModel.date, in: ...Date(), displayedComponents: .date)
-                            .labelsHidden()
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                    }
-                    
-                    // MARK: Area Kategori
-                    VStack(alignment: .leading, spacing: 12) {
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                
+                // MARK: Area Tanggal & Kategori
+                Section {
+                    // Membatasi tanggal agar tidak bisa memilih di masa depan
+                    DatePicker("Tanggal", selection: $viewModel.date, in: ...Date(), displayedComponents: .date)
+                    HStack{
                         Text("Kategori")
-                            .font(.headline)
-                            .fontWeight(.bold)
                         
-                        Picker("Kategori", selection: $viewModel.selectedCategory) {
+                        Spacer()
+                        
+                        Picker(selection: $viewModel.selectedCategory,label: EmptyView()) {
                             Section{
-                                Text("Pilih Kategori")
-                                    .tag(MomentCategory?.none) // Placeholder ketika nil
-                                
+                                Text("None").tag(MomentCategory?.none)
                             }
-                            Section{
-                                ForEach(MomentCategory.allCases, id: \.self) { category in
-                                    Text(category.rawValue)
-                                        .tag(MomentCategory?.some(category))
-                                }
+                            ForEach(MomentCategory.allCases, id: \.self) { category in
+                                Text(category.rawValue)
+                                    .tag(MomentCategory?.some(category))
                             }
-                            
                         }
-                        .tint(.primary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 24))
-                    }
-                    
-                    // MARK: Area Deskripsi
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Deskripsi")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                        
-                        TextField("Apa yang terjadi di momen ini?", text: $viewModel.description)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 16)
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
                     }
                 }
-                .padding(24)
+                
+                // MARK: Area Deskripsi
+                Section {
+                    TextField("Apa yang terjadi di momen ini?\n(Maksimal 54 karakter)", text: $viewModel.description, axis: .vertical)
+                        .lineLimit(2...2) //dua baris max dua  untuk textfieldnya
+                        .onChange(of: viewModel.description) {
+                            if viewModel.description.count > CreateMomentViewModel.maxDescriptionLength {
+                                viewModel.description = String(viewModel.description.prefix(CreateMomentViewModel.maxDescriptionLength))
+                            }
+                        }
+                } header: {
+                    Text("Deskripsi")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+                        .textCase(nil)
+                }
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Tambahkan Momen")
             .navigationBarTitleDisplayMode(.inline)
             
@@ -87,10 +70,21 @@ struct CreateMomentView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
-                        dismiss()
+                        if viewModel.hasChanges {
+                            showCancelAlert = true
+                        } else {
+                            dismiss()
+                        }
                     } label: {
                         Image(systemName: "xmark")
                     }
+                    .confirmationDialog("Apakah Anda yakin ingin membatalkan momen baru ini?", isPresented: $showCancelAlert, titleVisibility: .visible) {
+                        Button("Batalkan Perubahan", role: .destructive) {
+                            dismiss()
+                        }
+                        Button("Kembali", role: .cancel) { }
+                    }
+                    .interactiveDismissDisabled(viewModel.hasChanges)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
@@ -104,7 +98,7 @@ struct CreateMomentView: View {
                 }
             }
             
-            // MARK: Action Sheet & Image Picker
+            // MARK: Action Sheet  Image Picker
             .confirmationDialog("Pilih Sumber Foto", isPresented: $showActionSheet, titleVisibility: .visible) {
                 Button("Kamera") {
                     imageSourceType = .camera
