@@ -41,6 +41,8 @@ final class ReflectMomentViewModel {
     private(set) var moments: [Moment] = []
     private(set) var selectedMoment: Moment?
 
+    private(set) var savedReflection: Reflection?
+
     // MARK: TEC-214: question state
 
     private(set) var allQuestions: [Question] = []
@@ -266,6 +268,7 @@ final class ReflectMomentViewModel {
 
         do {
             try modelContext.save()
+            savedReflection = reflection
             step = .completed
             return true
         } catch {

@@ -32,25 +32,58 @@ struct ReflectMomentView: View {
     // MARK: body
 
     var body: some View {
-        VStack(spacing: 16) {
-            header
-            content
-            bottomBar
+        if viewModel.step == .completed, let reflection = viewModel.savedReflection {
+            ReflectionSavedView(reflection: reflection, onClose: onClose)
+        } else {
+            reflectionFlow
         }
-        .padding()
-        .confirmationDialog(
-            "Apakah Anda yakin ingin membatalkan refleksi ini?",
-            isPresented: $showCancelConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Batalkan Refleksi", role: .destructive) {
-                onClose()
+    }
+
+    private var reflectionFlow: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                progressBar
+                content
+                bottomBar
             }
-        }
-        .task {
-            viewModel.seedQuestionsIfNeeded()
-            viewModel.loadQuestions()
-            viewModel.loadMoments()
+            .padding(.horizontal)
+            .padding(.bottom)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    CloseButton {
+                        showCancelConfirmation = true
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 2) {
+                        Text("Refleksi Hari ini")
+                            .font(.headline)
+                        if progressTotal > 0 {
+                            Text("\(progressCurrent) dari \(progressTotal)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    SaveButton(isEnabled: isSaveEnabled, action: handleSave)
+                }
+            }
+            .confirmationDialog(
+                "Apakah Anda yakin ingin membatalkan refleksi ini?",
+                isPresented: $showCancelConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Batalkan Refleksi", role: .destructive) {
+                    onClose()
+                }
+            }
+            .task {
+                viewModel.seedQuestionsIfNeeded()
+                viewModel.loadQuestions()
+                viewModel.loadMoments()
+            }
         }
     }
 
@@ -78,21 +111,19 @@ struct ReflectMomentView: View {
         }
     }
 
-    // MARK: header
+    // MARK: progress bar
 
-    private var header: some View {
-        NavigationHeaderBar(
-            title: "Refleksi Hari ini",
-            leadingIcon: "xmark",
-            onLeadingTap: { showCancelConfirmation = true },
-            trailingIcon: "checkmark",
-            trailingColor: .blue,
-            trailingForegroundColor: .white,
-            isTrailingEnabled: isSaveEnabled,
-            onTrailingTap: handleSave,
-            progressCurrent: progressCurrent,
-            progressTotal: progressTotal
-        )
+    @ViewBuilder
+    private var progressBar: some View {
+        if progressTotal > 0 {
+            HStack(spacing: 6) {
+                ForEach(0..<progressTotal, id: \.self) { index in
+                    Capsule()
+                        .fill(index < progressCurrent ? Color.accentColor : Color(.systemGray5))
+                        .frame(height: 5)
+                }
+            }
+        }
     }
 
     // save hanya aktif di halaman pertanyaan terakhir dan semua wajib sudah terjawab
@@ -104,7 +135,6 @@ struct ReflectMomentView: View {
 
     private func handleSave() {
         viewModel.saveReflection()
-        onClose()
     }
 
     private var progressCurrent: Int {
@@ -126,24 +156,17 @@ struct ReflectMomentView: View {
 
     @ViewBuilder
     private var bottomBar: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             if showPrimaryButton {
-                Button(action: handlePrimaryTap) {
-                    Text("Selanjutnya")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(isPrimaryEnabled ? Color.blue : Color(.systemGray4))
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-                .disabled(!isPrimaryEnabled)
+                PrimaryButton(
+                    title: "Selanjutnya",
+                    isEnabled: isPrimaryEnabled,
+                    action: handlePrimaryTap
+                )
             }
 
             if viewModel.step == .question {
-                Button("Kembali", action: viewModel.goToPreviousQuestionPage)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                SecondaryButton(title: "Kembali", action: viewModel.goToPreviousQuestionPage)
             }
         }
     }
@@ -188,25 +211,24 @@ struct ReflectMomentView: View {
         if viewModel.isEmptyState {
             emptyStateView
         } else {
-            momentPickerView
+            VStack(spacing: 28) {
+                momentPickerHeader
+                momentGrid
+            }
+            .padding(.top, 24)
         }
     }
 
     // MARK: TEC-211: show all moments logged that day (grid)
 
-    private var momentPickerView: some View {
-        VStack(spacing: 28) {
+    private var momentPickerHeader: some View {
+        VStack(spacing: 5) {
+            Text("Pilih Momen Hari Ini")
+                .font(.title3.weight(.semibold))
 
-            VStack(spacing: 6) {
-                Text("Pilih Momen Hari Ini")
-                    .font(.title3.weight(.semibold))
-
-                Text("Momen mana yang mau diceritakan?")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-            }
-
-            momentGrid
+            Text("Momen mana yang mau diceritakan?")
+                .font(.body)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -237,14 +259,14 @@ struct ReflectMomentView: View {
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 40))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
             Text("Belum ada momen yang tercatat hari ini")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: TEC-214: tampilan halaman pertanyaan (baca state dari ViewModel)
@@ -315,6 +337,124 @@ struct ReflectMomentView: View {
     }
 }
 
+// MARK: animation save reflection
+
+private struct ReflectionSavedView: View {
+
+    let reflection: Reflection
+    let onClose: () -> Void
+
+    private let autoDismissSeconds: Double = 3
+
+    // MARK: animasi state
+    @State private var showTitle = false
+    @State private var showCard = false
+    @State private var pulsing = false
+    @State private var showButton = false
+
+    private var cardScale: CGFloat {
+        guard showCard else { return 0.01 }
+        return pulsing ? 0.94 : 0.92
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+            
+            ConfettiBlast(fireDelay: 0.22)
+
+            VStack(spacing: 28) {
+                Text("Refleksi Tersimpan!")
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+                    .opacity(showTitle ? 1 : 0)
+                    .offset(y: showTitle ? 0 : -24)
+
+                ReflectionCard(reflection: reflection)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+                    .scaleEffect(cardScale)   // kecil di tengah -> maju & membesar
+                    .opacity(showCard ? 1 : 0)
+
+                closeButton
+                    .opacity(showButton ? 1 : 0)
+                    .scaleEffect(showButton ? 1 : 0.6)
+            }
+        }
+        .onAppear(perform: runAnimation)
+        .task {
+            try? await Task.sleep(for: .seconds(autoDismissSeconds))
+            onClose()
+        }
+    }
+
+    // MARK: tombol close
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(Color(.systemBackground)))
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: koreografi animasi
+
+    private func runAnimation() {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.65).delay(0.05)) {
+            showTitle = true
+        }
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.55).delay(0.08)) {
+            showCard = true
+        }
+        withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.5)) {
+            pulsing = true
+        }
+        withAnimation(.easeIn(duration: 0.2).delay(0.45)) {
+            showButton = true
+        }
+    }
+}
+
+// MARK: confetti blast
+
+private struct ConfettiBlast: View {
+
+    var fireDelay: Double = 0
+
+    @State private var burst = false
+    @State private var faded = false
+
+    private var blastScale: CGFloat {
+        if faded { return 1.9 }
+        return burst ? 1.4 : 0.15
+    }
+
+    var body: some View {
+        Image("Confetti")
+            .resizable()
+            .scaledToFill()
+            .scaleEffect(blastScale)
+            .opacity(faded ? 0 : (burst ? 1 : 0))
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.13).delay(fireDelay)) {
+                    burst = true
+                }
+                withAnimation(.easeIn(duration: 0.18).delay(fireDelay + 0.13)) {
+                    faded = true
+                }
+            }
+    }
+}
+
 // MARK: preview helper: bikin data foto dummy
 
 private func dummyPhotoData(color: UIColor) -> Data {
@@ -327,9 +467,9 @@ private func dummyPhotoData(color: UIColor) -> Data {
     return image.pngData() ?? Data()
 }
 
-// MARK: preview TEC-211, carousel dengan beberapa moment
+// MARK: preview TEC-211, grid dengan beberapa moment
 
-#Preview("TEC-211: Carousel Beberapa Momen") {
+#Preview("TEC-211: Grid Beberapa Momen") {
     let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
@@ -371,4 +511,33 @@ private func dummyPhotoData(color: UIColor) -> Data {
         onClose: {}
     )
     .modelContainer(container)
+}
+
+// MARK: preview TEC-287, animation reflection
+
+#Preview("Animation Reflection") {
+    let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+
+    let moment = Moment(
+        photo: dummyPhotoData(color: .systemOrange),
+        timestamp: .now,
+        shortDescription: "Main bikin rumah-rumahan sama Lili.",
+        category: .bermainBersama
+    )
+    let reflection = Reflection(date: .now, moment: moment, isCompleted: true)
+
+    let q4 = Question(code: "Q4", scope: .daily, answerType: .chip, text: "Perasaan?", displayOrder: 5)
+    let q6 = Question(code: "Q6", scope: .daily, answerType: .essay, text: "Perbedaan?", displayOrder: 8)
+    reflection.answers = [
+        Answer(question: q4, selectedChip: "Hangat", reflection: reflection),
+        Answer(question: q6, essayText: "Momen ini terasa hangat dan mengalir.", reflection: reflection)
+    ]
+
+    container.mainContext.insert(moment)
+    container.mainContext.insert(reflection)
+
+    return ReflectionSavedView(reflection: reflection, onClose: {})
+        .modelContainer(container)
 }
