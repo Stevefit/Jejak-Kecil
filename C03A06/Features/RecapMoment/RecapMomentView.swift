@@ -33,9 +33,9 @@ struct RecapMomentView: View {
             
             //MARK: Step Progress Bar + sticky header WQ1
             .safeAreaInset(edge: .top) {
-                VStack{
+                VStack(spacing: 16) {
                     StepProgressBar(current: currentPage, total: totalPage)
-                        .padding(.vertical, 20)
+                        .padding(.top, 31)
                     if currentPage == 1 { wq1Header }
                 }
                 .padding(.horizontal, 25)
@@ -65,11 +65,10 @@ struct RecapMomentView: View {
                     VStack(spacing: 4) {
                         Text("Refleksi Mingguan")
                             .font(.headline)
-                            .padding(.top)
-                        
                         Text("\(currentPage) dari \(totalPage)")
                             .font(.footnote)
                     }
+                    .padding(.top, 34)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Simpan", systemImage: "checkmark") {
