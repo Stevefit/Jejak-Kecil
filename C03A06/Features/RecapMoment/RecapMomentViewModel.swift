@@ -100,6 +100,11 @@ final class RecapMomentViewModel {
     var canSave: Bool {
         isReflectionSelected && isEssayValid
     }
+
+    // ada perubahan yang belum disimpan (untuk konfirmasi batal)
+    var hasChanges: Bool {
+        isReflectionSelected || !essayText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     
     // MARK: simpan recap ke database
     func saveRecap() -> Bool {
