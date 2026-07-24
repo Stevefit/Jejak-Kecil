@@ -14,29 +14,37 @@ struct ReflectMomentView: View {
     @State private var viewModel: ReflectMomentViewModel
     @State private var showCancelConfirmation = false
     let onClose: () -> Void
+    let onSaved: (Reflection) -> Void
 
     init(
         modelContext: ModelContext,
         date: Date = .now,
-        onClose: @escaping () -> Void
+        editingReflection: Reflection? = nil,
+        onClose: @escaping () -> Void,
+        onSaved: @escaping (Reflection) -> Void = { _ in }
     ) {
         _viewModel = State(
             initialValue: ReflectMomentViewModel(
                 modelContext: modelContext,
-                date: date
+                date: date,
+                editingReflection: editingReflection
             )
         )
 
         self.onClose = onClose
+        self.onSaved = onSaved
     }
     // MARK: body
 
     var body: some View {
-        if viewModel.step == .completed, let reflection = viewModel.savedReflection {
-            ReflectionSavedView(reflection: reflection, onClose: onClose)
-        } else {
-            reflectionFlow
-        }
+        // animasi "Refleksi Tersimpan!" ditampilkan oleh ReviewMomentView (via onSaved)
+        // agar background-nya adalah ReviewMomentView, bukan background sheet
+        reflectionFlow
+            .onChange(of: viewModel.step) { _, newStep in
+                if newStep == .completed, let reflection = viewModel.savedReflection {
+                    onSaved(reflection)
+                }
+            }
     }
 
     private var reflectionFlow: some View {
@@ -49,6 +57,8 @@ struct ReflectMomentView: View {
             }
             .padding(.horizontal)
             .padding(.bottom)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGray6).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -85,6 +95,7 @@ struct ReflectMomentView: View {
                 viewModel.seedQuestionsIfNeeded()
                 viewModel.loadQuestions()
                 viewModel.loadMoments()
+                viewModel.prefillForEditingIfNeeded()
             }
         }
     }
@@ -283,7 +294,7 @@ struct ReflectMomentView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 24)   // + outer padding 16 = 40 dari tepi layar
             .padding(.bottom, 24)
         }
     }
@@ -335,7 +346,7 @@ struct ReflectMomentView: View {
 
 // MARK: animation save reflection
 
-private struct ReflectionSavedView: View {
+struct ReflectionSavedView: View {
 
     let reflection: Reflection
     let onClose: () -> Void
@@ -350,17 +361,17 @@ private struct ReflectionSavedView: View {
 
     private var cardScale: CGFloat {
         guard showCard else { return 0.01 }
-        return pulsing ? 0.94 : 0.92
+        return pulsing ? 0.80 : 0.78
     }
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.35)
                 .ignoresSafeArea()
-            
+
             ConfettiBlast(fireDelay: 0.22)
 
-            VStack(spacing: 28) {
+            VStack(spacing: 12) {
                 Text("Refleksi Tersimpan!")
                     .font(.title.weight(.bold))
                     .foregroundStyle(.white)
@@ -371,7 +382,9 @@ private struct ReflectionSavedView: View {
                 ReflectionCard(reflection: reflection)
                     .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
-                    .scaleEffect(cardScale)   // kecil di tengah -> maju & membesar
+                    .scaleEffect(cardScale)
+                    .padding(.top, -24)
+                    .padding(.bottom, 8)    
                     .opacity(showCard ? 1 : 0)
 
                 closeButton

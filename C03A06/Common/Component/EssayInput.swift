@@ -32,8 +32,8 @@ struct EssayInput: View {
             }
 
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Color(.systemBackground))
 
                 if text.isEmpty {
                     Text("Maksimal \(maxLength) karakter")

@@ -39,8 +39,8 @@ struct ChipDropdownSelector: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(Color(.systemBackground))
                 )
             }
             .buttonStyle(.plain)
