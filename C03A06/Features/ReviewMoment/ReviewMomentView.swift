@@ -7,6 +7,8 @@ struct ReviewMomentView: View {
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
     @State private var showingReflectMoment = false
+    @State private var reflectionToEdit: Reflection?
+    @State private var savedReflectionForAnimation: Reflection?
     @AppStorage("shouldShowCreateMomentFromWidget") private var shouldShowCreateMomentFromWidget = false
     
     private let gridColumns = [
@@ -116,7 +118,9 @@ struct ReviewMomentView: View {
                                     .padding(.horizontal)
                                 
                                 if let reflection = viewModel.reflection {
-                                    ReflectionCard(reflection: reflection)
+                                    ReflectionCard(reflection: reflection, onEdit: {
+                                        reflectionToEdit = reflection
+                                    })
                                 } else {
                                     VStack(spacing: 16) {
                                         Button(action: { showingReflectMoment = true }) {
@@ -211,6 +215,13 @@ struct ReviewMomentView: View {
                 if viewModel.isShowingReflectionReminderOverlay {
                     reflectionReminderOverlay
                 }
+
+                if let reflection = savedReflectionForAnimation {
+                    ReflectionSavedView(reflection: reflection, onClose: {
+                        withAnimation { savedReflectionForAnimation = nil }
+                    })
+                    .transition(.opacity)
+                }
             }
             .onAppear {
                 viewModel.modelContext = modelContext
@@ -237,8 +248,37 @@ struct ReviewMomentView: View {
             }) {
                 ReflectMomentView(
                     modelContext: modelContext,
-                    onClose: { showingReflectMoment = false }
+                    onClose: { showingReflectMoment = false },
+                    onSaved: { reflection in
+                        showingReflectMoment = false
+                        showSavedAnimation(for: reflection)
+                    }
                 )
+            }
+            .sheet(item: $reflectionToEdit, onDismiss: {
+                viewModel.fetchData()
+            }) { reflection in
+                ReflectMomentView(
+                    modelContext: modelContext,
+                    date: reflection.date,
+                    editingReflection: reflection,
+                    onClose: { reflectionToEdit = nil },
+                    onSaved: { updated in
+                        reflectionToEdit = nil
+                        showSavedAnimation(for: updated)
+                    }
+                )
+            }
+        }
+    }
+
+    // tampilkan animasi setelah sheet selesai ditutup, agar confetti tampil penuh di atas ReviewMomentView
+    private func showSavedAnimation(for reflection: Reflection) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            viewModel.fetchData()
+            withAnimation(.easeIn(duration: 0.2)) {
+                savedReflectionForAnimation = reflection
             }
         }
     }
