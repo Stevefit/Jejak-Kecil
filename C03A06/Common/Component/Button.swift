@@ -9,7 +9,7 @@
 
 import SwiftUI
 
-// tombol utama, contoh: "Selanjutnya"
+//MARK: tombol utama, contoh: "Selanjutnya"
 struct PrimaryButton: View {
     let title: String
     var isEnabled: Bool = true
@@ -18,25 +18,31 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal)
         }
-        .buttonStyle(.borderedProminent)
+        .font(.headline)
+        .buttonStyle(.glassProminent)
         .controlSize(.large)
         .disabled(!isEnabled)
     }
 }
 
-// tombol sekunder (teks biasa), contoh: "Kembali"
+//MARK:  tombol sekunder (teks biasa), contoh: "Kembali"
 struct SecondaryButton: View {
     let title: String
     let action: () -> Void
 
     var body: some View {
-        Button(title, action: action)
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .underline()
+        }
+        .foregroundStyle(.secondary)
     }
 }
 
-// tombol close (X) untuk toolbar
+//MARK:  tombol close (X) untuk toolbar
 struct CloseButton: View {
     var icon: String = "xmark"
     let action: () -> Void
@@ -48,7 +54,7 @@ struct CloseButton: View {
     }
 }
 
-// tombol save
+//MARK:  tombol save
 struct SaveButton: View {
     var icon: String = "checkmark"
     var isEnabled: Bool = true
@@ -61,4 +67,12 @@ struct SaveButton: View {
         .buttonStyle(.glassProminent)
         .disabled(!isEnabled)
     }
+}
+
+#Preview{
+    PrimaryButton(title:"Selanjutnya"){}
+    PrimaryButton(title:"Selanjutnya", isEnabled: false){}
+    PrimaryButton(title:"Simpan Perubahan"){}
+    SecondaryButton(title: "Kembali"){}
+    SaveButton(){}
 }
