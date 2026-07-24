@@ -277,6 +277,13 @@ struct ReviewMomentView: View {
                     }
                 )
             }
+            .sheet(isPresented: $showingRecap, onDismiss: {
+                viewModel.fetchData()
+            }) {
+                RecapMomentView(modelContext: modelContext)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+            }
         }
     }
 
@@ -287,13 +294,6 @@ struct ReviewMomentView: View {
             viewModel.fetchData()
             withAnimation(.easeIn(duration: 0.2)) {
                 savedReflectionForAnimation = reflection
-            }
-            .sheet(isPresented: $showingRecap, onDismiss: {
-                viewModel.fetchData()
-            }) {
-                RecapMomentView(modelContext: modelContext)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.hidden)
             }
         }
     }
