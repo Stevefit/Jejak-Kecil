@@ -52,6 +52,14 @@ final class ReflectMomentViewModel {
     private let date: Date
     private var modelContext: ModelContext
 
+    // MARK: TEC-224: refleksi yang sedang diedit (nil kalau bikin baru)
+    private let editingReflection: Reflection?
+    private var didPrefillForEditing = false
+
+    var isEditing: Bool {
+        editingReflection != nil
+    }
+
     private let pageTemplates: [[String]] = [
         ["Q1", "FQ1"],
         ["Q2"],
@@ -59,9 +67,29 @@ final class ReflectMomentViewModel {
         ["Q4", "Q5", "FQ2", "Q6"]
     ]
 
-    init(modelContext: ModelContext, date: Date = .now) {
+    init(modelContext: ModelContext, date: Date = .now, editingReflection: Reflection? = nil) {
         self.modelContext = modelContext
         self.date = date
+        self.editingReflection = editingReflection
+    }
+
+    // MARK: TEC-224: prefill moment & jawaban dari refleksi yang diedit
+
+    func prefillForEditingIfNeeded() {
+        guard let reflection = editingReflection, !didPrefillForEditing else { return }
+        didPrefillForEditing = true
+
+        selectedMoment = reflection.moment
+
+        var drafts: [String: LocalAnswerDraft] = [:]
+        for answer in reflection.answers {
+            drafts[answer.question.code] = LocalAnswerDraft(
+                selectedChoice: answer.selectedChoice,
+                selectedChip: answer.selectedChip,
+                essayText: answer.essayText
+            )
+        }
+        localDraftAnswers = drafts
     }
 
     // MARK: TEC-211: load moment hari ini
@@ -249,8 +277,19 @@ final class ReflectMomentViewModel {
             return false
         }
 
-        let reflection = Reflection(date: date, moment: moment, isCompleted: true)
-        modelContext.insert(reflection)
+        let reflection: Reflection
+        if let editing = editingReflection {
+            // mode edit: pakai refleksi yang ada, ganti moment & hapus jawaban lama
+            reflection = editing
+            reflection.moment = moment
+            reflection.isCompleted = true
+            for oldAnswer in reflection.answers {
+                modelContext.delete(oldAnswer)
+            }
+        } else {
+            reflection = Reflection(date: date, moment: moment, isCompleted: true)
+            modelContext.insert(reflection)
+        }
 
         for page in visiblePages {
             for question in questions(in: page) {
