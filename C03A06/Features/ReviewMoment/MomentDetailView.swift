@@ -23,7 +23,7 @@ struct MomentDetailView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMMM yyyy"
         formatter.locale = Locale(identifier: "id_ID")
-        return formatter.string(from: currentMoment.timestamp).uppercased()
+        return formatter.string(from: currentMoment.timestamp)
     }
 
     var body: some View {
@@ -74,12 +74,21 @@ struct MomentDetailView: View {
                     .padding(.horizontal, 16)
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(dateText)
-                        .font(.body)
-                        .fontWeight(.bold)
-                        .italic()
-                        .foregroundColor(.black)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 12) {
+                        Text(dateText)
+                            .font(.body)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+
+                        Text(currentMoment.category.rawValue)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.yellow.opacity(0.4))
+                            .clipShape(Capsule())
+                    }
 
                     Text(currentMoment.shortDescription)
                         .font(.body)
