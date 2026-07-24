@@ -57,6 +57,8 @@ struct ReflectMomentView: View {
             }
             .padding(.horizontal)
             .padding(.bottom)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGray6).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -298,7 +300,7 @@ struct ReflectMomentView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 24)   // + outer padding 16 = 40 dari tepi layar
             .padding(.bottom, 24)
         }
     }
