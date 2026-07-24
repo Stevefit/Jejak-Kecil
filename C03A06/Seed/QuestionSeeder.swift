@@ -77,7 +77,7 @@ enum QuestionSeeder {
             answerType: .chip,
             text: "Perasaan apa yang Anda rasakan setelah momen tersebut?",
             displayOrder: 5,
-            chipOptions: ["Hangat", "Bangga", "Tergesa-gesa", "Datar", "Ragu"]
+            chipOptions: Mood.allCases.map(\.rawValue)
         )
         
         // q5 - momen diingat anak
