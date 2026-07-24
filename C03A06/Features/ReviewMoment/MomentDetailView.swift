@@ -7,10 +7,12 @@ struct MomentDetailView: View {
     
     var allDayMoments: [Moment]
     @State private var currentMoment: Moment
+    var viewModel: ReviewMomentViewModel
     
-    init(allDayMoments: [Moment], initialMoment: Moment) {
+    init(allDayMoments: [Moment], initialMoment: Moment, viewModel: ReviewMomentViewModel) {
         self.allDayMoments = allDayMoments
         self._currentMoment = State(initialValue: initialMoment)
+        self.viewModel = viewModel
     }
 
     private var currentIndex: Int {
@@ -21,7 +23,7 @@ struct MomentDetailView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMMM yyyy"
         formatter.locale = Locale(identifier: "id_ID")
-        return formatter.string(from: currentMoment.timestamp).uppercased()
+        return formatter.string(from: currentMoment.timestamp)
     }
 
     var body: some View {
@@ -72,14 +74,23 @@ struct MomentDetailView: View {
                     .padding(.horizontal, 16)
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(dateText)
-                        .font(.body)
-                        .fontWeight(.bold)
-                        .italic()
-                        .foregroundColor(.black)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 12) {
+                        Text(dateText)
+                            .font(.body)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
 
-                    Text(currentMoment.shortDescription ?? "")
+                        Text(currentMoment.category.rawValue)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.yellow.opacity(0.4))
+                            .clipShape(Capsule())
+                    }
+
+                    Text(currentMoment.shortDescription)
                         .font(.body)
                         .foregroundColor(.black)
                         .lineSpacing(4)
@@ -109,8 +120,12 @@ struct MomentDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $isEditing) {
-            EditMomentView(moment: currentMoment, isPresented: $isEditing)
+        .sheet(isPresented: $isEditing, onDismiss: {
+            if let updated = viewModel.moments.first(where: { $0.id == currentMoment.id }) {
+                currentMoment = updated
+            }
+        }) {
+            EditMomentView(moment: currentMoment, isPresented: $isEditing, viewModel: viewModel)
         }
     }
 }

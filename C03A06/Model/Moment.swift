@@ -5,16 +5,11 @@
 //  Created by Steve on 14/07/26.
 //
 //
-//  Moment.swift
-//  C03A06
-//
-//  Created by Steve on 14/07/26.
-//
 
 import Foundation
 import SwiftData
 
-enum MomentCategory: String, Codable, CaseIterable {
+enum MomentCategory: String, Codable, CaseIterable, Sendable {
     case bermainBersama = "Bermain bersama"
     case ngobrolDanCerita = "Ngobrol & cerita"
     case aktivitasRutin = "Aktivitas rutin (makan, mandi, antar sekolah)"

@@ -28,6 +28,25 @@ enum ChoiceType: String, Codable, Sendable {
     case c
 }
 
+// MARK: Q4 perasaan + deskripsi yang dipake di MomentCard
+enum Mood: String, CaseIterable, Codable, Sendable {
+    case hangat = "Hangat"
+    case bangga = "Bangga"
+    case tergesaGesa = "Tergesa-gesa"
+    case datar = "Datar"
+    case ragu = "Ragu"
+
+    var reflectionDescription: String {
+        switch self {
+        case .hangat: return "Momen ini terasa hangat dan mengalir."
+        case .bangga: return "Momen ini terasa penuh rasa bangga."
+        case .tergesaGesa: return "Momen ini terasa singkat dan terburu-buru."
+        case .datar: return "Momen ini terasa tenang tanpa banyak kesan."
+        case .ragu: return "Momen ini terasa belum mudah dipahami."
+        }
+    }
+}
+
 // MARK: questions
 @Model
 final class Question {
