@@ -29,6 +29,7 @@ struct RecapMomentView: View {
                 default: wq2Content
                 }
             }
+            .scrollDismissesKeyboard(.interactively) //Fix ketika ngisi textfield bisa close keyboard
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             
             //MARK: Step Progress Bar + sticky header WQ1
@@ -78,7 +79,6 @@ struct RecapMomentView: View {
                     .disabled(!viewModel.canSave)
                 }
             }
-            .interactiveDismissDisabled(viewModel.hasChanges)
             
             //MARK: Bottom navigation
             .safeAreaInset(edge: .bottom) {
@@ -98,7 +98,7 @@ struct RecapMomentView: View {
                 viewModel.loadWeeklyReflections()
                 viewModel.loadWQ2()
             }
-        }
+        }   .interactiveDismissDisabled(viewModel.hasChanges)//fix: ketika ada perubahan tidak bisa di swipe untuk dissmiss modal (harus di navstacknya)
     }
     
     // MARK: WQ1 — header (sticky di bawah progress bar)
