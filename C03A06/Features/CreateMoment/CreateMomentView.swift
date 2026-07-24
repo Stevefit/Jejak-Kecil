@@ -63,6 +63,7 @@ struct CreateMomentView: View {
                         .textCase(nil)
                 }
             }
+            .scrollDismissesKeyboard(.interactively) //Fix ketika ngisi deskripsi bisa close keyboard
             .navigationTitle("Tambahkan Momen")
             .navigationBarTitleDisplayMode(.inline)
             
@@ -83,7 +84,6 @@ struct CreateMomentView: View {
                             dismiss()
                         }
                     }
-                    .interactiveDismissDisabled(viewModel.hasChanges)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
@@ -111,7 +111,7 @@ struct CreateMomentView: View {
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(sourceType: imageSourceType, selectedImageData: $viewModel.photoData)
             }
-        }
+        }.interactiveDismissDisabled(viewModel.hasChanges) //fix: ketika ada perubahan tidak bisa di swipe untuk dissmiss modal (harus di navstacknya)
     }
 }
 

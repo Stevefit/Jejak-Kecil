@@ -129,13 +129,7 @@ struct ReflectMomentView: View {
     @ViewBuilder
     private var progressBar: some View {
         if progressTotal > 0 {
-            HStack(spacing: 6) {
-                ForEach(0..<progressTotal, id: \.self) { index in
-                    Capsule()
-                        .fill(index < progressCurrent ? Color.accentColor : Color(.systemGray5))
-                        .frame(height: 5)
-                }
-            }
+            StepProgressBar(current: progressCurrent, total: progressTotal)
         }
     }
 
