@@ -39,7 +39,7 @@ struct RecapMomentView: View {
                         .padding(.top, 31)
                     if currentPage == 1 { wq1Header }
                 }
-                .padding(.horizontal, 25)
+                .padding(.horizontal)
                 .background(Color(uiColor: .systemGroupedBackground))
             }
             .navigationBarTitleDisplayMode(.inline)
