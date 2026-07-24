@@ -29,11 +29,11 @@ struct MultipleChoiceSelector: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
                             .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(Color(.secondarySystemBackground))
+                                RoundedRectangle(cornerRadius: 22)
+                                    .fill(Color(.systemBackground))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: 22)
                                     .stroke(isSelected(choice) ? Color.blue : Color.clear, lineWidth: 2)
                             )
                     }
