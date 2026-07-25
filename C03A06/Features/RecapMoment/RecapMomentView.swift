@@ -17,8 +17,12 @@ struct RecapMomentView: View {
     private let totalPage: Int = 2
     private let gridColumns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
     
-    init(modelContext: ModelContext, date: Date = .now) {
+    // Dipanggil setelah Recap berhasil disimpan (sebelum sheet ditutup).
+    let onSaved: () -> Void
+
+    init(modelContext: ModelContext, date: Date = .now, onSaved: @escaping () -> Void = {}) {
         _viewModel = State(initialValue: RecapMomentViewModel(modelContext: modelContext, date: date))
+        self.onSaved = onSaved
     }
     
     var body: some View {
@@ -73,7 +77,10 @@ struct RecapMomentView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Simpan", systemImage: "checkmark") {
-                        if viewModel.saveRecap() { dismiss() }
+                        if viewModel.saveRecap() {
+                            onSaved()
+                            dismiss()
+                        }
                     }
                     .buttonStyle(.glassProminent)
                     .disabled(!viewModel.canSave)

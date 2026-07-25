@@ -10,6 +10,8 @@ struct ReviewMomentView: View {
     @State private var showingRecap = false
     @State private var reflectionToEdit: Reflection?
     @State private var savedReflectionForAnimation: Reflection?
+    @State private var showSuccessOverlay = false
+    @State private var calendarInitialTab = 1
     @AppStorage("shouldShowCreateMomentFromWidget") private var shouldShowCreateMomentFromWidget = false
     
     private let gridColumns = [
@@ -52,7 +54,10 @@ struct ReviewMomentView: View {
                             
                             Spacer()
                             
-                            Button(action: { navigateToCalendar = true }) {
+                            Button(action: {
+                                calendarInitialTab = 1
+                                navigateToCalendar = true
+                            }) {
                                 Image(systemName: "archivebox")
                                     .font(.system(size: 24))
                                     .foregroundColor(.black)
@@ -62,6 +67,7 @@ struct ReviewMomentView: View {
                                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                             }
                             .buttonStyle(.plain)
+                            .anchorPreference(key: ArchiveAnchorKey.self, value: .bounds) { $0 }
                             
                             NavigationLink {
                                 ParentProfileView()
@@ -111,6 +117,16 @@ struct ReviewMomentView: View {
                                 .cornerRadius(20)
                             }
                             .padding(.horizontal)
+                            // sheet di sini (bukan di root) supaya tak bentrok dengan .sheet lain
+                            .sheet(isPresented: $showingRecap, onDismiss: {
+                                viewModel.fetchData()
+                            }) {
+                                RecapMomentView(modelContext: modelContext, onSaved: {
+                                    showRecapSuccessOverlay()
+                                })
+                                .presentationDetents([.large])
+                                .presentationDragIndicator(.hidden)
+                            }
                         }
                         
                         // MARK: Refleksi Hari Ini
@@ -229,6 +245,27 @@ struct ReviewMomentView: View {
                     .transition(.opacity)
                 }
             }
+            
+            // MARK: Overlay Success Recap (Efek Sorotan / Spotlight)
+            // Mengambil data koordinat (anchor) dari tombol Arsip yang dikirim melalui ArchiveAnchorKey.
+            // Koordinat ini digunakan oleh SuccessOverlay untuk melubangi layar gelap persis di atas tombol Arsip.
+            .overlayPreferenceValue(ArchiveAnchorKey.self) { anchor in
+                if showSuccessOverlay, let anchor {
+                    GeometryReader { proxy in
+                        SuccessOverlay(
+                            highlightRect: proxy[anchor],
+                            onViewSummary: {
+                                showSuccessOverlay = false
+                                calendarInitialTab = 0
+                                navigateToCalendar = true
+                            },
+                            onDismiss: { showSuccessOverlay = false }
+                        )
+                    }
+                    .ignoresSafeArea()
+                }
+            }
+            
             // MARK: Lifecycle & Observasi
             .onAppear {
                 viewModel.modelContext = modelContext
@@ -244,7 +281,7 @@ struct ReviewMomentView: View {
             }
             // MARK: Navigasi & Sheet
             .navigationDestination(isPresented: $navigateToCalendar) {
-                CalendarHistoryView()
+                CalendarHistoryView(initialTab: calendarInitialTab)
             }
             .sheet(isPresented: $showingCreateMoment, onDismiss: {
                 viewModel.fetchData()
@@ -277,13 +314,6 @@ struct ReviewMomentView: View {
                     }
                 )
             }
-            .sheet(isPresented: $showingRecap, onDismiss: {
-                viewModel.fetchData()
-            }) {
-                RecapMomentView(modelContext: modelContext)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.hidden)
-            }
         }
     }
 
@@ -297,7 +327,17 @@ struct ReviewMomentView: View {
             }
         }
     }
-
+    
+    // tampilkan overlay sukses setelah sheet Recap selesai ditutup
+    private func showRecapSuccessOverlay() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            withAnimation(.easeIn(duration: 0.2)) {
+                showSuccessOverlay = true
+            }
+        }
+    }
+    
     // MARK: - Helpers
     private func showCreateMomentIfNeeded() {
         guard shouldShowCreateMomentFromWidget else { return }
