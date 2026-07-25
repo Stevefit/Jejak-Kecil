@@ -7,7 +7,6 @@ struct ReviewMomentView: View {
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
     @State private var showingReflectMoment = false
-    @State private var showingRecap = false
     @State private var reflectionToEdit: Reflection?
     @State private var savedReflectionForAnimation: Reflection?
     @State private var showSuccessOverlay = false
@@ -87,47 +86,11 @@ struct ReviewMomentView: View {
                         .padding(.top, 8)
                         
                         // MARK: Ringkasan Mingguan
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Ringkasan Mingguan")
-                                .font(.headline.weight(.semibold))
-                                .foregroundColor(.black)
-                                .padding(.horizontal)
-                            
-                            Button(action: { showingRecap = true }) {
-                                HStack(spacing: 16) {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.yellow)
-                                        .frame(width: 110, height: 80)
-                                        .overlay(
-                                            Image(systemName: "note.text")
-                                                .font(.largeTitle)
-                                                .foregroundColor(.white)
-                                        )
-                                    
-                                    Text("Klik disini untuk\nisi refleksi\nmingguan")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.black)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    Spacer()
-                                }
-                                .padding(12)
-                                .background(Color.white)
-                                .cornerRadius(20)
-                            }
-                            .padding(.horizontal)
-                            // sheet di sini (bukan di root) supaya tak bentrok dengan .sheet lain
-                            .sheet(isPresented: $showingRecap, onDismiss: {
-                                viewModel.fetchData()
-                            }) {
-                                RecapMomentView(modelContext: modelContext, onSaved: {
-                                    showRecapSuccessOverlay()
-                                })
-                                .presentationDetents([.large])
-                                .presentationDragIndicator(.hidden)
-                            }
-                        }
+                        WeeklyRecapSection(
+                            modelContext: modelContext,
+                            onRecapSaved: { showRecapSuccessOverlay() },
+                            onDismiss: { viewModel.fetchData() }
+                        )
                         
                         // MARK: Refleksi Hari Ini
                         if !viewModel.moments.isEmpty {

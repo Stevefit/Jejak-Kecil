@@ -52,7 +52,7 @@ struct SuccessOverlay: View {
     // MARK: - Sorotan Tombol Arsip
     private var archiveHighlight: some View {
         VStack(alignment: .trailing, spacing: 4) {
-            halfSizeImage("CurvedArrow")
+            HalfSizeImage("CurvedArrow")
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(.trailing, 20)
                 .padding(.top, 116)
@@ -68,7 +68,7 @@ struct SuccessOverlay: View {
                 .foregroundStyle(.white)
                 .padding(.bottom, 20)
             
-            halfSizeImage("RecapDone")
+            HalfSizeImage("RecapDone")
                 .padding(.bottom, 15)
             
             
@@ -95,16 +95,5 @@ struct SuccessOverlay: View {
         .padding(.top,58)
     }
     
-    // MARK: - Helper
-    // Aset dari sketch sy downlaod x2 jadi pakai ini untuk samakan ukuran asli
-    @ViewBuilder
-    private func halfSizeImage(_ name: String) -> some View {
-        if let ui = UIImage(named: name) {
-            Image(uiImage: ui)
-                .resizable()
-                .scaledToFit()
-                .frame(width: ui.size.width / 2, height: ui.size.height / 2)
-        }
-    }
 }
 
