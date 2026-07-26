@@ -5,8 +5,15 @@ struct CalendarHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    @State private var viewModel = CalendarHistoryViewModel()
+    // Dideklarasikan tipenya saja (tanpa langsung diisi) agar kita bisa
+    // melakukan inisialisasi manual dan memasukkan parameter (initialTab).
+    @State private var viewModel: CalendarHistoryViewModel
     private var calendar: Calendar { Calendar.current }
+
+    // Mengambil nilai initialTab dari parent view dan meracik ViewModel-nya.
+    init(initialTab: Int = 1) {
+        _viewModel = State(initialValue: CalendarHistoryViewModel(initialTab: initialTab))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

@@ -4,7 +4,7 @@ import SwiftData
 @MainActor
 @Observable
 final class CalendarHistoryViewModel {
-    var selectedTab: Int = 1
+    var selectedTab: Int
     var selectedDate: Date = Date() {
         didSet {
             filterSelectedDayData()
@@ -26,8 +26,11 @@ final class CalendarHistoryViewModel {
     private let calendar: Calendar
     private var modelContext: ModelContext?
 
-    init(calendar: Calendar = .current) {
+    // Menerima initialTab (0 untuk Mingguan, 1 untuk Harian) agar
+    // halaman pemanggil bisa menentukan tab apa yang pertama kali terbuka.
+    init(calendar: Calendar = .current, initialTab: Int = 1) {
         self.calendar = calendar
+        self.selectedTab = initialTab
     }
 
     var formattedMonthYear: String {

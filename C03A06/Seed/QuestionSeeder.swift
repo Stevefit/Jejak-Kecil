@@ -11,7 +11,12 @@ import SwiftData
 enum QuestionSeeder {
     @MainActor
     static func seed(in context: ModelContext) throws {
-        let existingCount = try context.fetchCount(FetchDescriptor<Question>())
+        // FIX BUG: Cek spesifik "Q1" saja.
+        // Tidak cek total semua soal, karena kalau soal mingguan terseed duluan, soal harian gagal dibuat
+        let descriptor = FetchDescriptor<Question>(
+            predicate: #Predicate { $0.code == "Q1" }
+        )
+        let existingCount = try context.fetchCount(descriptor)
         guard existingCount == 0 else { return }
         for question in makeSeedQuestions() {
             context.insert(question)
