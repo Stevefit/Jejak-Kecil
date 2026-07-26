@@ -85,12 +85,14 @@ struct ReviewMomentView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        // MARK: Ringkasan Mingguan
-                        WeeklyRecapSection(
-                            modelContext: modelContext,
-                            onRecapSaved: { showRecapSuccessOverlay() },
-                            onDismiss: { viewModel.fetchData() }
-                        )
+                        // MARK: Ringkasan Mingguan — hanya hari Minggu & belum diisi
+                        if viewModel.shouldShowWeeklyRecap {
+                            WeeklyRecapSection(
+                                modelContext: modelContext,
+                                onRecapSaved: { showRecapSuccessOverlay() },
+                                onDismiss: { viewModel.fetchData() }
+                            )
+                        }
                         
                         // MARK: Refleksi Hari Ini
                         if !viewModel.moments.isEmpty {
