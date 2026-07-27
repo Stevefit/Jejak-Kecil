@@ -8,6 +8,16 @@ final class ReviewMomentViewModel {
     var moments: [Moment] = []
     var reflection: Reflection?
     var isShowingReflectionReminderOverlay = false
+    private var weeklyRecapCompleted = false
+    private var weeklyHasReflection = false
+
+    // Section refleksi mingguan muncul jika: hari Minggu, ada minimal 1 refleksi minggu ini,
+    // dan recap minggu ini belum diisi.
+    var shouldShowWeeklyRecap: Bool {
+        Calendar.current.component(.weekday, from: selectedDate) == 1  // Minggu (Gregorian)
+            && weeklyHasReflection
+            && !weeklyRecapCompleted
+    }
     
     var modelContext: ModelContext?
     private let reflectionReminderOverlayDateKey = "lastReflectionReminderOverlayDate"
@@ -48,6 +58,25 @@ final class ReviewMomentViewModel {
             print("SwiftData Fetch Error: \(error.localizedDescription)")
             self.moments = []
             self.reflection = nil
+        }
+
+        // status recap & refleksi minggu ini (untuk aturan tampil section refleksi mingguan)
+        if let week = calendar.weekRange(for: selectedDate) {
+            let weekStart = week.lowerBound
+            let weekEnd = week.upperBound
+
+            let recapFetch = FetchDescriptor<Recap>(
+                predicate: #Predicate { $0.weekStart == weekStart && $0.isCompleted }
+            )
+            weeklyRecapCompleted = ((try? context.fetch(recapFetch))?.isEmpty == false)
+
+            let weekReflectionFetch = FetchDescriptor<Reflection>(
+                predicate: #Predicate { $0.date >= weekStart && $0.date < weekEnd }
+            )
+            weeklyHasReflection = ((try? context.fetch(weekReflectionFetch))?.isEmpty == false)
+        } else {
+            weeklyRecapCompleted = false
+            weeklyHasReflection = false
         }
     }
     

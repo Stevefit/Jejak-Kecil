@@ -59,7 +59,7 @@ struct CreateMomentView: View {
                     Text("Deskripsi")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundStyle(.primary)
+                        .foregroundColor(.primary)
                         .textCase(nil)
                 }
             }
