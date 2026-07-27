@@ -7,6 +7,10 @@ struct ReviewMomentView: View {
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
     @State private var showingReflectMoment = false
+    @State private var reflectionToEdit: Reflection?
+    @State private var savedReflectionForAnimation: Reflection?
+    @State private var showSuccessOverlay = false
+    @State private var calendarInitialTab = 1
     @AppStorage("shouldShowCreateMomentFromWidget") private var shouldShowCreateMomentFromWidget = false
     
     private let gridColumns = [
@@ -34,6 +38,7 @@ struct ReviewMomentView: View {
             ZStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // MARK: Header — Tanggal, Arsip, Profil
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(dayOfWeekString)
@@ -48,7 +53,10 @@ struct ReviewMomentView: View {
                             
                             Spacer()
                             
-                            Button(action: { navigateToCalendar = true }) {
+                            Button(action: {
+                                calendarInitialTab = 1
+                                navigateToCalendar = true
+                            }) {
                                 Image(systemName: "archivebox")
                                     .font(.system(size: 24))
                                     .foregroundColor(.black)
@@ -58,6 +66,7 @@ struct ReviewMomentView: View {
                                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                             }
                             .buttonStyle(.plain)
+                            .anchorPreference(key: ArchiveAnchorKey.self, value: .bounds) { $0 }
                             
                             NavigationLink {
                                 ParentProfileView()
@@ -76,38 +85,16 @@ struct ReviewMomentView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Ringkasan Mingguan")
-                                .font(.headline.weight(.semibold))
-                                .foregroundColor(.black)
-                                .padding(.horizontal)
-                            
-                            Button(action: {}) {
-                                HStack(spacing: 16) {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.yellow)
-                                        .frame(width: 110, height: 80)
-                                        .overlay(
-                                            Image(systemName: "note.text")
-                                                .font(.largeTitle)
-                                                .foregroundColor(.white)
-                                        )
-                                    
-                                    Text("Klik disini untuk\nisi refleksi\nmingguan")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.black)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    Spacer()
-                                }
-                                .padding(12)
-                                .background(Color.white)
-                                .cornerRadius(20)
-                            }
-                            .padding(.horizontal)
+                        // MARK: Ringkasan Mingguan — hanya hari Minggu & belum diisi
+                        if viewModel.shouldShowWeeklyRecap {
+                            WeeklyRecapSection(
+                                modelContext: modelContext,
+                                onRecapSaved: { showRecapSuccessOverlay() },
+                                onDismiss: { viewModel.fetchData() }
+                            )
                         }
                         
+                        // MARK: Refleksi Hari Ini
                         if !viewModel.moments.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Refleksi Hari Ini")
@@ -116,7 +103,9 @@ struct ReviewMomentView: View {
                                     .padding(.horizontal)
                                 
                                 if let reflection = viewModel.reflection {
-                                    ReflectionCard(reflection: reflection)
+                                    ReflectionCard(reflection: reflection, onEdit: {
+                                        reflectionToEdit = reflection
+                                    })
                                 } else {
                                     VStack(spacing: 16) {
                                         Button(action: { showingReflectMoment = true }) {
@@ -148,6 +137,7 @@ struct ReviewMomentView: View {
                             }
                         }
                         
+                        // MARK: Momen Hari Ini — grid / empty state
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Momen Hari Ini\(viewModel.moments.isEmpty ? "" : " (\(viewModel.moments.count))")")
                                 .font(.headline.weight(.semibold))
@@ -208,10 +198,40 @@ struct ReviewMomentView: View {
                 }
                 .background(Color(.systemGray6).edgesIgnoringSafeArea(.all))
 
+                // MARK: Overlay Pengingat Refleksi
                 if viewModel.isShowingReflectionReminderOverlay {
                     reflectionReminderOverlay
                 }
+
+                if let reflection = savedReflectionForAnimation {
+                    ReflectionSavedView(reflection: reflection, onClose: {
+                        withAnimation { savedReflectionForAnimation = nil }
+                    })
+                    .transition(.opacity)
+                }
             }
+            
+            // MARK: Overlay Success Recap (Efek Sorotan / Spotlight)
+            // Mengambil data koordinat (anchor) dari tombol Arsip yang dikirim melalui ArchiveAnchorKey.
+            // Koordinat ini digunakan oleh SuccessOverlay untuk melubangi layar gelap persis di atas tombol Arsip.
+            .overlayPreferenceValue(ArchiveAnchorKey.self) { anchor in
+                if showSuccessOverlay, let anchor {
+                    GeometryReader { proxy in
+                        SuccessOverlay(
+                            highlightRect: proxy[anchor],
+                            onPrimaryAction: {
+                                showSuccessOverlay = false
+                                calendarInitialTab = 0
+                                navigateToCalendar = true
+                            },
+                            onSecondaryAction: { showSuccessOverlay = false }
+                        )
+                    }
+                    .ignoresSafeArea()
+                }
+            }
+            
+            // MARK: Lifecycle & Observasi
             .onAppear {
                 viewModel.modelContext = modelContext
                 viewModel.fetchData()
@@ -224,8 +244,9 @@ struct ReviewMomentView: View {
             .onChange(of: viewModel.reflection) { _, _ in
                 viewModel.showReflectionReminderOverlayIfNeeded()
             }
+            // MARK: Navigasi & Sheet
             .navigationDestination(isPresented: $navigateToCalendar) {
-                CalendarHistoryView()
+                CalendarHistoryView(initialTab: calendarInitialTab)
             }
             .sheet(isPresented: $showingCreateMoment, onDismiss: {
                 viewModel.fetchData()
@@ -237,18 +258,59 @@ struct ReviewMomentView: View {
             }) {
                 ReflectMomentView(
                     modelContext: modelContext,
-                    onClose: { showingReflectMoment = false }
+                    onClose: { showingReflectMoment = false },
+                    onSaved: { reflection in
+                        showingReflectMoment = false
+                        showSavedAnimation(for: reflection)
+                    }
+                )
+            }
+            .sheet(item: $reflectionToEdit, onDismiss: {
+                viewModel.fetchData()
+            }) { reflection in
+                ReflectMomentView(
+                    modelContext: modelContext,
+                    date: reflection.date,
+                    editingReflection: reflection,
+                    onClose: { reflectionToEdit = nil },
+                    onSaved: { updated in
+                        reflectionToEdit = nil
+                        showSavedAnimation(for: updated)
+                    }
                 )
             }
         }
     }
 
+    // tampilkan animasi setelah sheet selesai ditutup, agar confetti tampil penuh di atas ReviewMomentView
+    private func showSavedAnimation(for reflection: Reflection) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            viewModel.fetchData()
+            withAnimation(.easeIn(duration: 0.2)) {
+                savedReflectionForAnimation = reflection
+            }
+        }
+    }
+    
+    // tampilkan overlay sukses setelah sheet Recap selesai ditutup
+    private func showRecapSuccessOverlay() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            withAnimation(.easeIn(duration: 0.2)) {
+                showSuccessOverlay = true
+            }
+        }
+    }
+    
+    // MARK: - Helpers
     private func showCreateMomentIfNeeded() {
         guard shouldShowCreateMomentFromWidget else { return }
         shouldShowCreateMomentFromWidget = false
         showingCreateMoment = true
     }
 
+    // MARK: - Subviews
     private var reflectionReminderOverlay: some View {
         Color.black.opacity(0.2)
             .ignoresSafeArea()

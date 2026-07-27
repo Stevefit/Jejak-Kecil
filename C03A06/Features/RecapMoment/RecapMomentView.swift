@@ -17,8 +17,12 @@ struct RecapMomentView: View {
     private let totalPage: Int = 2
     private let gridColumns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
     
-    init(modelContext: ModelContext, date: Date = .now) {
+    // Dipanggil setelah Recap berhasil disimpan (sebelum sheet ditutup).
+    let onSaved: () -> Void
+
+    init(modelContext: ModelContext, date: Date = .now, onSaved: @escaping () -> Void = {}) {
         _viewModel = State(initialValue: RecapMomentViewModel(modelContext: modelContext, date: date))
+        self.onSaved = onSaved
     }
     
     var body: some View {
@@ -29,6 +33,7 @@ struct RecapMomentView: View {
                 default: wq2Content
                 }
             }
+            .scrollDismissesKeyboard(.interactively) //Fix ketika ngisi textfield bisa close keyboard
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             
             //MARK: Step Progress Bar + sticky header WQ1
@@ -38,7 +43,7 @@ struct RecapMomentView: View {
                         .padding(.top, 31)
                     if currentPage == 1 { wq1Header }
                 }
-                .padding(.horizontal, 25)
+                .padding(.horizontal)
                 .background(Color(uiColor: .systemGroupedBackground))
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -72,13 +77,15 @@ struct RecapMomentView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Simpan", systemImage: "checkmark") {
-                        if viewModel.saveRecap() { dismiss() }
+                        if viewModel.saveRecap() {
+                            onSaved()
+                            dismiss()
+                        }
                     }
                     .buttonStyle(.glassProminent)
                     .disabled(!viewModel.canSave)
                 }
             }
-            .interactiveDismissDisabled(viewModel.hasChanges)
             
             //MARK: Bottom navigation
             .safeAreaInset(edge: .bottom) {
@@ -98,7 +105,7 @@ struct RecapMomentView: View {
                 viewModel.loadWeeklyReflections()
                 viewModel.loadWQ2()
             }
-        }
+        }   .interactiveDismissDisabled(viewModel.hasChanges)//fix: ketika ada perubahan tidak bisa di swipe untuk dissmiss modal (harus di navstacknya)
     }
     
     // MARK: WQ1 — header (sticky di bawah progress bar)

@@ -28,7 +28,7 @@ struct ChipSelector: View {
                             .padding(.vertical, 10)
                             .background(
                                 Capsule()
-                                    .fill(isSelected(option) ? Color.blue : Color(.secondarySystemBackground))
+                                    .fill(isSelected(option) ? Color.blue : Color(.systemBackground))
                             )
                             .foregroundStyle(isSelected(option) ? .white : .primary)
                     }
