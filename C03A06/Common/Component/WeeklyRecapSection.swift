@@ -15,7 +15,6 @@ struct WeeklyRecapSection: View {
     // Dipanggil saat sheet Recap ditutup (untuk refresh data).
     var onDismiss: () -> Void = {}
 
-    @State private var showingRecap = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -23,28 +22,14 @@ struct WeeklyRecapSection: View {
                 .font(.headline.weight(.semibold))
                 .foregroundColor(.black)
 
-            Button(action: { showingRecap = true }) {
-                HStack(spacing: 14) {
-                    HalfSizeImage("CardRecap")
-                        .padding(.leading, 23)
-
-                    Text("Klik disini untuk\nisi refleksi\nmingguan")
-                        .font(.headline.weight(.semibold))
-                        .foregroundColor(.black)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: true, vertical: false)
-
-                    Spacer()
-                }
-                .background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .sheet(isPresented: $showingRecap, onDismiss: onDismiss) {
-                RecapMomentView(modelContext: modelContext, onSaved: onRecapSaved)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.hidden)
-            }
-        }.padding(.horizontal,20)
+            WeeklyCard(
+                title: "Klik disini untuk\nisi refleksi\nmingguan",
+                subtitle: nil,
+                modelContext: modelContext,
+                onRecapSaved: onRecapSaved,
+                onDismiss: onDismiss
+            )
+        }.padding(.horizontal, 20)
     }
 }
 
