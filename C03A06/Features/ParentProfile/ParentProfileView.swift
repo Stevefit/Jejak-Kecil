@@ -20,9 +20,11 @@ struct ParentProfileView: View {
             {
                 VStack{
                     VStack(spacing:4){
-                        Image(systemName: "face.smiling.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.blue)
+                        Image(parent.parentRole == .ayah ? "Father" : "Mother")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
                         Text(parent.name)
                             .font(.largeTitle)
                         Text(parent.parentRole == .ayah ? "Ayah" : "Ibu")
