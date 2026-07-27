@@ -27,22 +27,27 @@ struct MomentDetailView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
+        ScrollView {
             VStack(spacing: 0) {
                 ZStack {
-                    if let uiImage = UIImage(data: currentMoment.photo) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: geometry.size.width, height: geometry.size.height * 0.55)
-                            .clipped()
-                    } else {
-                        Image(systemName: "photo")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                            .frame(width: geometry.size.width, height: geometry.size.height * 0.55)
-                            .background(Color(.systemGray5))
-                    }
+                    Rectangle()
+                        .fill(Color.clear)
+                        .aspectRatio(3/4, contentMode: .fit)
+                        .overlay {
+                            if let uiImage = UIImage(data: currentMoment.photo) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                            } else {
+                                ZStack {
+                                    Color(.systemGray5)
+                                    Image(systemName: "photo")
+                                        .font(.largeTitle)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                        }
+                        .clipped()
 
                     HStack {
                         if currentIndex > 0 {
@@ -96,7 +101,7 @@ struct MomentDetailView: View {
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                     
-                    Spacer()
+                    Spacer(minLength: 20)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 28)
@@ -104,6 +109,7 @@ struct MomentDetailView: View {
                 .background(Color(.systemGray6))
             }
         }
+        .background(Color(.systemGray6).ignoresSafeArea())
         .navigationTitle("Detail Momen")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -125,7 +131,14 @@ struct MomentDetailView: View {
                 currentMoment = updated
             }
         }) {
-            EditMomentView(moment: currentMoment, isPresented: $isEditing, viewModel: viewModel)
+            EditMomentView(
+                moment: currentMoment,
+                isPresented: $isEditing,
+                viewModel: viewModel,
+                onDelete: {
+                    dismiss()
+                }
+            )
         }
     }
 }

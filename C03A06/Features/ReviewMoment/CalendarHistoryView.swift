@@ -5,12 +5,12 @@ struct CalendarHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    // Dideklarasikan tipenya saja (tanpa langsung diisi) agar kita bisa
-    // melakukan inisialisasi manual dan memasukkan parameter (initialTab).
-    @State private var viewModel: CalendarHistoryViewModel
+    @State private var viewModel = CalendarHistoryViewModel()
+    @State private var savedReflectionForAnimation: Reflection?
+    @State private var reflectionToEdit: Reflection?
+    
     private var calendar: Calendar { Calendar.current }
     
-    // Mengambil nilai initialTab dari parent view dan meracik ViewModel-nya.
     init(initialTab: Int = 1) {
         _viewModel = State(initialValue: CalendarHistoryViewModel(initialTab: initialTab))
     }
@@ -85,7 +85,7 @@ struct CalendarHistoryView: View {
             .sheet(isPresented: $viewModel.showingCreateMoment, onDismiss: {
                 viewModel.fetchDataForMonth()
             }) {
-                CreateMomentView()  
+                CreateMomentView()
             }
             .sheet(isPresented: $viewModel.showingReflectMoment, onDismiss: {
                 viewModel.fetchDataForMonth()
@@ -93,8 +93,33 @@ struct CalendarHistoryView: View {
                 ReflectMomentView(
                     modelContext: modelContext,
                     date: viewModel.selectedDate,
-                    onClose: { viewModel.showingReflectMoment = false }
+                    onClose: { viewModel.showingReflectMoment = false },
+                    onSaved: { reflection in
+                        viewModel.showingReflectMoment = false
+                        showSavedAnimation(for: reflection)
+                    }
                 )
+            }
+            .sheet(item: $reflectionToEdit, onDismiss: {
+                viewModel.fetchDataForMonth()
+            }) { reflection in
+                ReflectMomentView(
+                    modelContext: modelContext,
+                    date: reflection.date,
+                    editingReflection: reflection,
+                    onClose: { reflectionToEdit = nil },
+                    onSaved: { updated in
+                        reflectionToEdit = nil
+                        showSavedAnimation(for: updated)
+                    }
+                )
+            }
+            
+            if let reflection = savedReflectionForAnimation {
+                ReflectionSavedView(reflection: reflection, onClose: {
+                    withAnimation { savedReflectionForAnimation = nil }
+                })
+                .transition(.opacity)
             }
             
             if showSuccessOverlay {
@@ -121,6 +146,17 @@ struct CalendarHistoryView: View {
             DetailRecapMomentView(recap: recap)
         }
     }
+    
+    private func showSavedAnimation(for reflection: Reflection) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            viewModel.fetchDataForMonth()
+            withAnimation(.easeIn(duration: 0.2)) {
+                savedReflectionForAnimation = reflection
+            }
+        }
+    }
+    
     private var weeklySection: some View {
         VStack(spacing: 16) {
             if viewModel.weeklyArchiveItems.isEmpty {
@@ -161,7 +197,6 @@ struct CalendarHistoryView: View {
         }
     }
     
-    // tampilkan overlay sukses setelah sheet Recap selesai ditutup
     private func showRecapSuccessOverlay() {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
@@ -170,6 +205,7 @@ struct CalendarHistoryView: View {
             }
         }
     }
+    
     private var dailySection: some View {
         VStack(alignment: .leading, spacing: 24) {
             calendarGridView
@@ -181,7 +217,9 @@ struct CalendarHistoryView: View {
                         .foregroundColor(.black)
                     
                     if let reflection = viewModel.selectedDayReflection {
-                        ReflectionCard(reflection: reflection)
+                        ReflectionCard(reflection: reflection, onEdit: {
+                            reflectionToEdit = reflection
+                        })
                     } else {
                         Button(action: { viewModel.showingReflectMoment = true }) {
                             HStack(spacing: 12) {
@@ -228,7 +266,6 @@ struct CalendarHistoryView: View {
                     
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(viewModel.selectedDayMoments) { moment in
-                            // PERBAIKAN: Gunakan ReviewMomentViewModel yang ter-inject modelContext
                             NavigationLink(destination: MomentDetailView(
                                 allDayMoments: viewModel.selectedDayMoments,
                                 initialMoment: moment,

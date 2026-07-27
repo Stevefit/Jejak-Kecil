@@ -93,6 +93,13 @@ final class ReviewMomentViewModel {
         fetchData()
     }
 
+    func deleteMoment(_ moment: Moment) {
+        guard let context = modelContext else { return }
+        context.delete(moment)
+        try? context.save()
+        fetchData()
+    }
+
     func showReflectionReminderOverlayIfNeeded() {
         guard Calendar.current.isDateInToday(selectedDate), reflection == nil else {
             isShowingReflectionReminderOverlay = false

@@ -5,16 +5,23 @@ struct EditMomentView: View {
     @Bindable var moment: Moment
     @Binding var isPresented: Bool
     var viewModel: ReviewMomentViewModel
+    var onDelete: (() -> Void)? = nil
 
     @State private var descriptionInput: String = ""
     @State private var dateInput: Date = Date()
     @State private var categoryInput: MomentCategory? = nil
+    
     @State private var photoDataInput: Data? = nil
+    @State private var rawPhotoData: Data? = nil
     
     @State private var showCancelAlert = false
+    @State private var showDeleteAlert = false
     @State private var showActionSheet = false
     @State private var showingImagePicker = false
     @State private var imageSourceType: UIImagePickerController.SourceType = .photoLibrary
+
+    @State private var tempPickedImageData: Data? = nil
+    @State private var showingCropper = false
 
     private var isFormValid: Bool {
         let isDescriptionValid = !descriptionInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -73,6 +80,25 @@ struct EditMomentView: View {
                         .textCase(nil)
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                PrimaryButton(
+                    title: "Simpan Perubahan",
+                    isEnabled: isFormValid && hasChanges,
+                    action: {
+                        if let category = categoryInput {
+                            moment.category = category
+                        }
+                        viewModel.updateMoment(
+                            moment,
+                            withDescription: descriptionInput,
+                            date: dateInput,
+                            photoData: photoDataInput
+                        )
+                        isPresented = false
+                    }
+                )
+                .padding(.bottom, 12)
+            }
             .navigationTitle("Ubah Momen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -96,22 +122,21 @@ struct EditMomentView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        if let category = categoryInput {
-                            moment.category = category
-                        }
-                        viewModel.updateMoment(
-                            moment,
-                            withDescription: descriptionInput,
-                            date: dateInput,
-                            photoData: photoDataInput
-                        )
-                        isPresented = false
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
                     } label: {
-                        Image(systemName: "checkmark")
+                        Image(systemName: "trash")
                     }
                     .buttonStyle(.glassProminent)
-                    .disabled(!isFormValid)
+                    .tint(.red)
+                    .confirmationDialog("Apakah Anda yakin ingin menghapus momen ini?", isPresented: $showDeleteAlert, titleVisibility: .visible) {
+                        Button("Hapus Momen", role: .destructive) {
+                            viewModel.deleteMoment(moment)
+                            isPresented = false
+                            onDelete?()
+                        }
+                        Button("Batal", role: .cancel) { }
+                    }
                 }
             }
             .confirmationDialog("Pilih Sumber Foto", isPresented: $showActionSheet, titleVisibility: .visible) {
@@ -123,15 +148,46 @@ struct EditMomentView: View {
                     imageSourceType = .photoLibrary
                     showingImagePicker = true
                 }
+                if rawPhotoData != nil || photoDataInput != nil {
+                    Button("Atur Ulang Bingkai Foto (3:4)") {
+                        tempPickedImageData = rawPhotoData ?? photoDataInput
+                        showingCropper = true
+                    }
+                }
             }
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(sourceType: imageSourceType, selectedImageData: $photoDataInput)
+            .sheet(isPresented: $showingImagePicker, onDismiss: {
+                if tempPickedImageData != nil {
+                    rawPhotoData = tempPickedImageData
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(250))
+                        showingCropper = true
+                    }
+                }
+            }) {
+                ImagePicker(sourceType: imageSourceType, selectedImageData: $tempPickedImageData)
+            }
+            .sheet(isPresented: $showingCropper) {
+                if let rawData = tempPickedImageData, let uiImage = UIImage(data: rawData) {
+                    ImageCropperView(
+                        inputImage: uiImage,
+                        onCrop: { croppedData in
+                            self.photoDataInput = croppedData
+                            self.tempPickedImageData = nil
+                            self.showingCropper = false
+                        },
+                        onCancel: {
+                            self.tempPickedImageData = nil
+                            self.showingCropper = false
+                        }
+                    )
+                }
             }
             .onAppear {
                 descriptionInput = moment.shortDescription
                 dateInput = moment.timestamp
                 categoryInput = moment.category
                 photoDataInput = moment.photo
+                rawPhotoData = moment.photo
             }
         }
     }
