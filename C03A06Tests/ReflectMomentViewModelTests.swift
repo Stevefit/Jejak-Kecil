@@ -239,13 +239,14 @@ struct ReflectMomentQuestionViewModelTests {
         #expect(viewModel.visiblePages.first?.codes == ["Q1"])
     }
 
+    
     // MARK: assertion 5
-    // Given halaman terakhir memuat essay Q6 (opsional)
+    // Given halaman terakhir memuat essay Q6 (wajib)
     // When Q4 & Q5 dijawab tapi Q6 dibiarkan kosong
-    // Then halaman tetap lengkap (essay tidak wajib diisi)
+    // Then halaman belum lengkap; setelah Q6 diisi, halaman menjadi lengkap
 
-    @Test("Given halaman terakhir ada essay Q6, When Q4 & Q5 dijawab tapi Q6 kosong, Then halaman tetap lengkap")
-    func essayIsOptionalForPageCompletion() throws {
+    @Test("Given halaman terakhir ada essay Q6 wajib, When Q4 & Q5 dijawab tapi Q6 kosong, Then belum lengkap sampai Q6 diisi")
+    func essayQ6IsRequiredForPageCompletion() throws {
         let context = try makeContextWithQuestions()
         let viewModel = makeViewModel(context: context)
 
@@ -262,6 +263,11 @@ struct ReflectMomentQuestionViewModelTests {
         viewModel.selectChip("Mungkin", for: "Q5")
 
         #expect(viewModel.isLastQuestionPage == true)
+        // Q6 wajib diisi, jadi halaman belum lengkap selama Q6 kosong.
+        #expect(viewModel.isCurrentQuestionPageComplete == false)
+
+        // Setelah Q6 diisi, halaman menjadi lengkap.
+        viewModel.setEssay("Momennya terasa lebih hangat dari biasanya", for: "Q6")
         #expect(viewModel.isCurrentQuestionPageComplete == true)
     }
 
