@@ -312,18 +312,28 @@ struct ReviewMomentView: View {
 
     // MARK: - Subviews
     private var reflectionReminderOverlay: some View {
-        Color.black.opacity(0.2)
-            .ignoresSafeArea()
-            .overlay(alignment: .bottomTrailing) {
-                Image("Flexible")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 260)
-                    .padding(.bottom, 22)
+        ZStack {
+            Color.black.opacity(0.2)
+                .ignoresSafeArea()
+
+            VStack {
+                Spacer()
+
+                HStack {
+                    Image("ReflectionFlexible")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 247)
+
+                    Spacer()
+                }
+                .padding(.leading, 23)
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                viewModel.dismissReflectionReminderOverlay()
-            }
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            viewModel.dismissReflectionReminderOverlay()
+        }
     }
 }
