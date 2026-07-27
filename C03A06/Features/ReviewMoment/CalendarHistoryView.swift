@@ -223,10 +223,10 @@ struct CalendarHistoryView: View {
                     } else {
                         Button(action: { viewModel.showingReflectMoment = true }) {
                             HStack(spacing: 12) {
-                                Image("Noreflectionmoment")
+                                Image("NoReflection")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(maxHeight: .infinity)
+                                    .frame(width: 193.88, height: 137.77)
                                 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Oops! Tidak ada refleksi")
@@ -245,7 +245,6 @@ struct CalendarHistoryView: View {
                                 
                                 Spacer()
                             }
-                            .frame(minHeight: 110)
                             .background(Color.white)
                             .cornerRadius(20)
                         }
@@ -295,10 +294,10 @@ struct CalendarHistoryView: View {
                     
                     Button(action: { viewModel.showingCreateMoment = true }) {
                         HStack(spacing: 12) {
-                            Image("Noreflectionmoment")
+                            Image("NoMoment")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(maxHeight: .infinity)
+                                .frame(width: 193.88, height: 137.77)
                             
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Oops! Tidak ada momen")
@@ -317,7 +316,6 @@ struct CalendarHistoryView: View {
                             
                             Spacer()
                         }
-                        .frame(minHeight: 110)
                         .background(Color.white)
                         .cornerRadius(20)
                     }
