@@ -30,54 +30,16 @@ struct EditParentProfileView: View {
         name != originalName || role != originalRole
     }
 
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private var isNameEmpty: Bool {
-        name.trimmingCharacters(in: .whitespaces).isEmpty
+        trimmedName.isEmpty
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Button {
-                    if hasChanges {
-                        showDiscardConfirmation = true
-                    } else {
-                        dismiss()
-                    }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .frame(width: 32, height: 32)
-                        .background(Color(.tertiarySystemFill))
-                        .clipShape(Circle())
-                }
-
-                Spacer()
-
-                Text("Edit Profile")
-                    .font(.headline)
-
-                Spacer()
-
-                Button {
-                    onSave(name, role)
-                    dismiss()
-                } label: {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(isNameEmpty ? Color.blue.opacity(0.4) : Color.blue)
-                        .clipShape(Circle())
-                }
-                .disabled(isNameEmpty)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 24)
-
-            // Fields
+        NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Nama")
@@ -114,12 +76,36 @@ struct EditParentProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                 }
+
+                Spacer()
             }
             .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .background(Color(.secondarySystemBackground))
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        close()
+                    } label: {
+                        Label("Tutup", systemImage: "xmark")
+                    }
+                    .labelStyle(.iconOnly)
+                }
 
-            Spacer()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        onSave(trimmedName, role)
+                        dismiss()
+                    } label: {
+                        Label("Simpan", systemImage: "checkmark")
+                    }
+                    .labelStyle(.iconOnly)
+                    .disabled(isNameEmpty)
+                }
+            }
         }
-        .background(Color(.secondarySystemBackground))
         .confirmationDialog(
             "Buang perubahan?",
             isPresented: $showDiscardConfirmation,
@@ -134,6 +120,15 @@ struct EditParentProfileView: View {
         }
         .interactiveDismissDisabled(hasChanges)
     }
+
+    private func close() {
+        onClose()
+        if hasChanges {
+            showDiscardConfirmation = true
+        } else {
+            dismiss()
+        }
+    }
 }
 
 #Preview {
@@ -144,7 +139,8 @@ struct EditParentProfileView: View {
                 role: .ayah,
                 onSave: { _, _ in },
                 onClose: {}
-            )                .presentationDetents([.medium])
-                .presentationDragIndicator(.hidden)
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.hidden)
         }
 }
