@@ -70,10 +70,16 @@
 		F0AE3F14300FD25C00D4C3B3 /* Exceptions for "C03A06" folder in "MomentWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Common/Component/BadgeCard.swift,
 				Features/AppIntents/AppModelContainer.swift,
 				Features/AppIntents/CreateMomentIntent.swift,
+				Features/ParentProfile/BadgeGridView.swift,
+				Features/ParentProfile/EditParentProfileView.swift,
+				Features/ParentProfile/ParentProfileView.swift,
+				Features/ParentProfile/ParentProfileViewModel.swift,
 				Item.swift,
 				Model/Moment.swift,
+				Model/Parent.swift,
 				Model/Question.swift,
 				Model/Recap.swift,
 				Model/Reflection.swift,

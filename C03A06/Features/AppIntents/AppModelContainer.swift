@@ -18,7 +18,8 @@ enum AppModelContainer {
             Question.self,
             Choice.self,
             Answer.self,
-            Recap.self
+            Recap.self,
+            Parent.self
         ])
         
         let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
