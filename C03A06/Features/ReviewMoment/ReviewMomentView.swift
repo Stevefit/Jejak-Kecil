@@ -219,12 +219,12 @@ struct ReviewMomentView: View {
                     GeometryReader { proxy in
                         SuccessOverlay(
                             highlightRect: proxy[anchor],
-                            onViewSummary: {
+                            onPrimaryAction: {
                                 showSuccessOverlay = false
                                 calendarInitialTab = 0
                                 navigateToCalendar = true
                             },
-                            onDismiss: { showSuccessOverlay = false }
+                            onSecondaryAction: { showSuccessOverlay = false }
                         )
                     }
                     .ignoresSafeArea()

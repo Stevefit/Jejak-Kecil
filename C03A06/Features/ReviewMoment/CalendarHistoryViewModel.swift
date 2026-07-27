@@ -4,6 +4,17 @@ import SwiftData
 @MainActor
 @Observable
 final class CalendarHistoryViewModel {
+    
+    struct WeeklyArchiveItem: Identifiable {
+        let id = UUID()
+        let weekNumber: Int
+        let startDate: Date
+        let endDate: Date
+        let dateRangeString: String
+        let recap: Recap?
+        let totalReflections: Int
+    }
+
     var selectedTab: Int
     var selectedDate: Date = Date() {
         didSet {
@@ -22,6 +33,8 @@ final class CalendarHistoryViewModel {
     
     private(set) var imageCacheByDay: [Date: Data] = [:]
     private(set) var datesWithReflection: Set<Date> = []
+    
+    private(set) var weeklyArchiveItems: [WeeklyArchiveItem] = []
 
     private let calendar: Calendar
     private var modelContext: ModelContext?
@@ -73,12 +86,14 @@ final class CalendarHistoryViewModel {
             
             buildCaches()
             filterSelectedDayData()
+            buildWeeklyArchiveItems()
         } catch {
             print("Failed to fetch month data: \(error)")
             self.monthMoments = []
             self.monthReflections = []
             self.imageCacheByDay = [:]
             self.datesWithReflection = []
+            self.weeklyArchiveItems = []
         }
     }
 
@@ -141,5 +156,103 @@ final class CalendarHistoryViewModel {
         }
 
         return dates
+    }
+
+    private func buildWeeklyArchiveItems() {
+        guard let context = modelContext,
+              let monthRange = calendar.dateInterval(of: .month, for: selectedDate) else { return }
+        
+        var items: [WeeklyArchiveItem] = []
+        var current = monthRange.start
+        var weekNumber = 1
+        var processedWeeks = Set<Date>()
+        
+        let today = Date()
+        let currentWeekStart = calendar.weekRange(for: today)?.lowerBound ?? today
+        let isTodaySunday = calendar.component(.weekday, from: today) == 1 // Minggu adalah 1
+        
+        while current < monthRange.end {
+            // Gunakan extension weekRange yang konsisten (Senin sebagai awal minggu)
+            guard let weekInterval = calendar.weekRange(for: current) else { break }
+            let weekStart = weekInterval.lowerBound
+            // weekEnd untuk keperluan UI adalah 1 hari sebelum awal minggu berikutnya (yaitu hari Minggu)
+            guard let weekEnd = calendar.date(byAdding: .day, value: -1, to: weekInterval.upperBound) else { break }
+            
+            if !processedWeeks.contains(weekStart) {
+                processedWeeks.insert(weekStart)
+                
+                // Fetch Recap for this week
+                let predicate = #Predicate<Recap> { recap in
+                    recap.weekStart == weekStart
+                }
+                let descriptor = FetchDescriptor<Recap>(predicate: predicate)
+                let recap = try? context.fetch(descriptor).first
+                
+                // Logic kemunculan card:
+                // 1. Jika sudah diisi (recap != nil), selalu munculkan (arsip).
+                // 2. Jika minggu sudah lewat (past week), munculkan (baik isi maupun oops).
+                // 3. Jika minggu ini sedang berjalan (current week), munculkan HANYA jika hari ini Minggu (isTodaySunday).
+                // 4. Jika minggu depan (future week), JANGAN munculkan.
+                
+                let isPastWeek = weekStart < currentWeekStart
+                let isCurrentWeek = weekStart == currentWeekStart
+                let shouldShow = recap != nil || isPastWeek || (isCurrentWeek && isTodaySunday)
+                
+                if shouldShow {
+                
+                // Calculate date range string
+                let dateRangeStr = formatWeekRange(start: weekStart, end: weekEnd)
+                
+                // Calculate total reflections for this week
+                let nextWeekStart = weekInterval.upperBound
+                let refPredicate = #Predicate<Reflection> { ref in
+                    ref.date >= weekStart && ref.date < nextWeekStart
+                }
+                let refDescriptor = FetchDescriptor<Reflection>(predicate: refPredicate)
+                let refCount = (try? context.fetchCount(refDescriptor)) ?? 0
+                
+                items.append(WeeklyArchiveItem(
+                    weekNumber: weekNumber,
+                    startDate: weekStart,
+                    endDate: weekEnd,
+                    dateRangeString: dateRangeStr,
+                    recap: recap,
+                    totalReflections: refCount
+                ))
+                weekNumber += 1
+                }
+            }
+            
+            current = calendar.date(byAdding: .day, value: 1, to: current)!
+        }
+        
+        self.weeklyArchiveItems = items
+    }
+    
+    private func formatWeekRange(start: Date, end: Date) -> String {
+        let startMonth = calendar.component(.month, from: start)
+        let endMonth = calendar.component(.month, from: end)
+        let startYear = calendar.component(.year, from: start)
+        let endYear = calendar.component(.year, from: end)
+        
+        let dayFormatter = DateFormatter()
+        dayFormatter.locale = Locale(identifier: "id_ID")
+        dayFormatter.dateFormat = "d"
+        
+        let monthFormatter = DateFormatter()
+        monthFormatter.locale = Locale(identifier: "id_ID")
+        monthFormatter.dateFormat = "MMMM"
+        
+        let yearFormatter = DateFormatter()
+        yearFormatter.locale = Locale(identifier: "id_ID")
+        yearFormatter.dateFormat = "yyyy"
+        
+        if startYear != endYear {
+            return "\(dayFormatter.string(from: start)) \(monthFormatter.string(from: start)) \(yearFormatter.string(from: start)) - \(dayFormatter.string(from: end)) \(monthFormatter.string(from: end)) \(yearFormatter.string(from: end))"
+        } else if startMonth != endMonth {
+            return "\(dayFormatter.string(from: start)) \(monthFormatter.string(from: start)) - \(dayFormatter.string(from: end)) \(monthFormatter.string(from: end)) \(yearFormatter.string(from: end))"
+        } else {
+            return "\(dayFormatter.string(from: start))-\(dayFormatter.string(from: end)) \(monthFormatter.string(from: start)) \(yearFormatter.string(from: start))"
+        }
     }
 }
