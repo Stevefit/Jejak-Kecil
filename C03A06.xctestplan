@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "A1B2C3D4-0000-0000-0000-000000000001",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:C03A06.xcodeproj",
+        "identifier" : "AAFE2B103004C7E000C98857",
+        "name" : "C03A06Tests"
+      }
+    }
+  ],
+  "version" : 1
+}
