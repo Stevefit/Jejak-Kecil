@@ -6,37 +6,49 @@ struct CalendarHistoryView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var viewModel = CalendarHistoryViewModel()
+    @State private var savedReflectionForAnimation: Reflection?
+    @State private var reflectionToEdit: Reflection?
+    
     private var calendar: Calendar { Calendar.current }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Picker("", selection: $viewModel.selectedTab) {
-                Text("Mingguan").tag(0)
-                Text("Harian").tag(1)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+        ZStack {
+            VStack(alignment: .leading, spacing: 16) {
+                Picker("", selection: $viewModel.selectedTab) {
+                    Text("Mingguan").tag(0)
+                    Text("Harian").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
 
-            DatePickerLabel(title: viewModel.formattedMonthYear) {
-                viewModel.showingDatePicker = true
-            }
-            .padding(.horizontal, 16)
-
-            ScrollView {
-                VStack(spacing: 20) {
-                    if viewModel.selectedTab == 0 {
-                        weeklySection
-                    } else {
-                        dailySection
-                    }
+                DatePickerLabel(title: viewModel.formattedMonthYear) {
+                    viewModel.showingDatePicker = true
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        if viewModel.selectedTab == 0 {
+                            weeklySection
+                        } else {
+                            dailySection
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGray6))
+
+            if let reflection = savedReflectionForAnimation {
+                ReflectionSavedView(reflection: reflection, onClose: {
+                    withAnimation { savedReflectionForAnimation = nil }
+                })
+                .transition(.opacity)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGray6))
         .navigationTitle("Arsip")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -80,8 +92,36 @@ struct CalendarHistoryView: View {
             ReflectMomentView(
                 modelContext: modelContext,
                 date: viewModel.selectedDate,
-                onClose: { viewModel.showingReflectMoment = false }
+                onClose: { viewModel.showingReflectMoment = false },
+                onSaved: { reflection in
+                    viewModel.showingReflectMoment = false
+                    showSavedAnimation(for: reflection)
+                }
             )
+        }
+        .sheet(item: $reflectionToEdit, onDismiss: {
+            viewModel.fetchDataForMonth()
+        }) { reflection in
+            ReflectMomentView(
+                modelContext: modelContext,
+                date: reflection.date,
+                editingReflection: reflection,
+                onClose: { reflectionToEdit = nil },
+                onSaved: { updated in
+                    reflectionToEdit = nil
+                    showSavedAnimation(for: updated)
+                }
+            )
+        }
+    }
+
+    private func showSavedAnimation(for reflection: Reflection) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            viewModel.fetchDataForMonth()
+            withAnimation(.easeIn(duration: 0.2)) {
+                savedReflectionForAnimation = reflection
+            }
         }
     }
 
@@ -105,7 +145,9 @@ struct CalendarHistoryView: View {
                         .foregroundColor(.black)
 
                     if let reflection = viewModel.selectedDayReflection {
-                        ReflectionCard(reflection: reflection)
+                        ReflectionCard(reflection: reflection, onEdit: {
+                            reflectionToEdit = reflection
+                        })
                     } else {
                         Button(action: { viewModel.showingReflectMoment = true }) {
                             HStack(spacing: 12) {
@@ -152,7 +194,6 @@ struct CalendarHistoryView: View {
 
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(viewModel.selectedDayMoments) { moment in
-                            // PERBAIKAN: Gunakan ReviewMomentViewModel yang ter-inject modelContext
                             NavigationLink(destination: MomentDetailView(
                                 allDayMoments: viewModel.selectedDayMoments,
                                 initialMoment: moment,

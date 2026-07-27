@@ -48,6 +48,7 @@ struct ReflectionCard: View {
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
                 }
+                .buttonStyle(.plain)
                 .padding(14)
             }
             
@@ -65,29 +66,25 @@ struct ReflectionCard: View {
                 let q4Answer = reflection.answers.first(where: { $0.question.code == "Q4" })
                 let q6Answer = reflection.answers.first(where: { $0.question.code == "Q6" })
                 
-                if q4Answer?.selectedChip != nil || q6Answer?.essayText != nil {
+                if let chipText = q4Answer?.selectedChip {
                     HStack(alignment: .center, spacing: 10) {
-                        if let chipText = q4Answer?.selectedChip {
-                            Text(chipText)
-                                .font(.caption.weight(.medium))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 6)
-                                .background(Color.yellow.opacity(0.35))
-                                .clipShape(Capsule())
-                        }
+                        Text(chipText)
+                            .font(.caption.weight(.medium))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Color.yellow.opacity(0.35))
+                            .clipShape(Capsule())
                         
-                        if let q6Text = q6Answer?.essayText, !q6Text.isEmpty {
-                            Text(q6Text)
-                                .font(.caption)
+                        if let mood = Mood(rawValue: chipText) {
+                            Text(mood.reflectionDescription)
+                                .font(.subheadline)
                                 .foregroundColor(.primary)
                                 .lineLimit(2)
                         }
                     }
-                    .padding(.top, 2)
                 }
                 
-                if let followUpAnswer = reflection.answers.first(where: { $0.question.isFollowUp }),
-                   let rawQuote = followUpAnswer.essayText,
+                if let rawQuote = q6Answer?.essayText,
                    !rawQuote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     
                     let limitedQuote = String(rawQuote.prefix(120))
