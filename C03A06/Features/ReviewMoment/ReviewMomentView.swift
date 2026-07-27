@@ -107,32 +107,31 @@ struct ReviewMomentView: View {
                                         reflectionToEdit = reflection
                                     })
                                 } else {
-                                    VStack(spacing: 16) {
-                                        Button(action: { showingReflectMoment = true }) {
-                                            Image(systemName: "plus")
-                                                .font(.title)
-                                                .foregroundColor(Color.blue)
-                                                .frame(width: 80, height: 80)
-                                                .background(Color.blue.opacity(0.2))
-                                                .clipShape(Circle())
-                                        }
-                                        
-                                        VStack(spacing: 4) {
-                                            Text("Belum ada refleksi hari ini")
-                                                .font(.headline.weight(.semibold))
-                                                .foregroundColor(.black)
+                                    Button(action: { showingReflectMoment = true }) {
+                                        VStack(spacing: 16) {
+                                            Image("AddReflection")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 118, height: 131)
                                             
-                                            Text("Refleksi harianmu akan muncul di sini setelah kamu\nmulai mencatat momen")
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                                .multilineTextAlignment(.center)
+                                            VStack(spacing: 4) {
+                                                Text("Belum ada refleksi hari ini")
+                                                    .font(.headline.weight(.semibold))
+                                                    .foregroundColor(.black)
+                                                
+                                                Text("Refleksi harianmu akan muncul di sini setelah kamu\nmulai mencatat momen")
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                                    .multilineTextAlignment(.center)
+                                            }
                                         }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 28)
+                                        .background(Color.white)
+                                        .cornerRadius(24)
+                                        .padding(.horizontal)
                                     }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 36)
-                                    .background(Color.white)
-                                    .cornerRadius(24)
-                                    .padding(.horizontal)
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -145,32 +144,31 @@ struct ReviewMomentView: View {
                                 .padding(.horizontal)
                             
                             if viewModel.moments.isEmpty {
-                                VStack(spacing: 16) {
-                                    Button(action: { showingCreateMoment = true }) {
-                                        Image(systemName: "plus")
-                                            .font(.title)
-                                            .foregroundColor(Color.blue)
-                                            .frame(width: 80, height: 80)
-                                            .background(Color.blue.opacity(0.2))
-                                            .clipShape(Circle())
-                                    }
-                                    
-                                    VStack(spacing: 4) {
-                                        Text("Belum ada momen hari ini")
-                                            .font(.headline.weight(.semibold))
-                                            .foregroundColor(.black)
+                                Button(action: { showingCreateMoment = true }) {
+                                    VStack(spacing: 16) {
+                                        Image("AddMoment")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 123, height: 136)
                                         
-                                        Text("Tambah satu momen untuk memulai harimu\ndengan Si Kecil")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                            .multilineTextAlignment(.center)
+                                        VStack(spacing: 4) {
+                                            Text("Belum ada momen hari ini")
+                                                .font(.headline.weight(.semibold))
+                                                .foregroundColor(.black)
+                                            
+                                            Text("Tambah satu momen untuk memulai harimu\ndengan Si Kecil")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                                .multilineTextAlignment(.center)
+                                        }
                                     }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 28)
+                                    .background(Color.white)
+                                    .cornerRadius(24)
+                                    .padding(.horizontal)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 36)
-                                .background(Color.white)
-                                .cornerRadius(24)
-                                .padding(.horizontal)
+                                .buttonStyle(.plain)
                             } else {
                                 LazyVGrid(columns: gridColumns, spacing: 12) {
                                     ForEach(viewModel.moments) { moment in
@@ -211,9 +209,7 @@ struct ReviewMomentView: View {
                 }
             }
             
-            // MARK: Overlay Success Recap (Efek Sorotan / Spotlight)
-            // Mengambil data koordinat (anchor) dari tombol Arsip yang dikirim melalui ArchiveAnchorKey.
-            // Koordinat ini digunakan oleh SuccessOverlay untuk melubangi layar gelap persis di atas tombol Arsip.
+            // MARK: Overlay Success Recap
             .overlayPreferenceValue(ArchiveAnchorKey.self) { anchor in
                 if showSuccessOverlay, let anchor {
                     GeometryReader { proxy in
@@ -282,7 +278,6 @@ struct ReviewMomentView: View {
         }
     }
 
-    // tampilkan animasi setelah sheet selesai ditutup, agar confetti tampil penuh di atas ReviewMomentView
     private func showSavedAnimation(for reflection: Reflection) {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
@@ -293,7 +288,6 @@ struct ReviewMomentView: View {
         }
     }
     
-    // tampilkan overlay sukses setelah sheet Recap selesai ditutup
     private func showRecapSuccessOverlay() {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
@@ -303,14 +297,12 @@ struct ReviewMomentView: View {
         }
     }
     
-    // MARK: - Helpers
     private func showCreateMomentIfNeeded() {
         guard shouldShowCreateMomentFromWidget else { return }
         shouldShowCreateMomentFromWidget = false
         showingCreateMoment = true
     }
 
-    // MARK: - Subviews
     private var reflectionReminderOverlay: some View {
         Color.black.opacity(0.2)
             .ignoresSafeArea()
