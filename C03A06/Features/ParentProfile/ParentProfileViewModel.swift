@@ -17,8 +17,6 @@ class ParentProfileViewModel {
 
     private var modelContext: ModelContext
 
-    // BadgeService ber-@MainActor, jadi init dan fetchBadges ikut diisolasi.
-    @MainActor
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchParent()

@@ -55,11 +55,11 @@ struct ReflectionCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 if let category = reflection.moment?.category {
                     Text(category.rawValue)
-                        .font(.caption)
+                        .font(.caption2)
                 }
                 
                 Text(reflection.moment?.shortDescription ?? "")
-                    .font(.title3.weight(.bold))
+                    .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                     .lineLimit(2)
                 
@@ -69,7 +69,7 @@ struct ReflectionCard: View {
                 if let chipText = q4Answer?.selectedChip {
                     HStack(alignment: .center, spacing: 10) {
                         Text(chipText)
-                            .font(.caption.weight(.medium))
+                            .font(.caption2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
                             .background(Color.yellow.opacity(0.35))
@@ -77,7 +77,7 @@ struct ReflectionCard: View {
                         
                         if let mood = Mood(rawValue: chipText) {
                             Text(mood.reflectionDescription)
-                                .font(.subheadline)
+                                .font(.caption2.weight(.semibold))
                                 .foregroundColor(.primary)
                                 .lineLimit(2)
                         }
@@ -91,10 +91,10 @@ struct ReflectionCard: View {
                     
                     HStack {
                         Text("“\(limitedQuote)”")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption2.weight(.semibold))
                             .foregroundColor(.primary)
                             .lineSpacing(3)
-                            .lineLimit(3)
+                            .lineLimit(3, reservesSpace: true)
                             .multilineTextAlignment(.leading)
                         
                         Spacer(minLength: 0)
@@ -117,4 +117,45 @@ struct ReflectionCard: View {
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
+}
+
+#Preview {
+    let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self])
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+
+    let dummyImage = UIImage(systemName: "photo")?.jpegData(compressionQuality: 1.0) ?? Data()
+
+    let moment = Moment(
+        photo: dummyImage,
+        timestamp: .now,
+        shortDescription: "Main bikin rumah-rumahan sama Lili. mencoba sesuatu ya",
+        category: .bermainBersama
+    )
+    let reflection = Reflection(date: .now, moment: moment, isCompleted: true)
+
+    let q4 = Question(code: "Q4", scope: .daily, answerType: .chip, text: "Gimana perasaanmu?", displayOrder: 4)
+    let q6 = Question(code: "Q6", scope: .daily, answerType: .essay, text: "Ada yang mau dicatat?", displayOrder: 6)
+
+    reflection.answers = [
+        Answer(question: q4, selectedChip: Mood.hangat.rawValue, reflection: reflection),
+        Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua. Dia bilang rumahnya buat kita berdua. SELESAI.", reflection: reflection)
+    ]
+
+    // reflection tanpa moment & tanpa jawaban (fallback)
+    let empty = Reflection(date: .now, moment: nil, isCompleted: false)
+
+    container.mainContext.insert(moment)
+    container.mainContext.insert(reflection)
+    container.mainContext.insert(empty)
+
+    return ScrollView {
+        VStack(spacing: 16) {
+            ReflectionCard(reflection: reflection, onEdit: { print("edit") })
+            ReflectionCard(reflection: empty)
+        }
+        .padding(.vertical)
+    }
+    .background(Color(.systemGray6))
+    .modelContainer(container)
 }
