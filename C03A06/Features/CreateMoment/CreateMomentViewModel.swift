@@ -16,11 +16,14 @@ final class CreateMomentViewModel {
     
     static let maxDescriptionLength = 54
 
-    var date: Date = .now  //set tanggal default ke hari ini.
+    var date: Date
     var description: String = ""
     var selectedCategory: MomentCategory? = nil 
     var photoData: Data? = nil
     
+    init(date: Date = .now) {
+        self.date = date
+    }
     
     // Validasi form
     var isFormValid: Bool {
