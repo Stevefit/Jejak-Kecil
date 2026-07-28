@@ -29,7 +29,7 @@ struct WeeklyRecapSection: View {
                 onRecapSaved: onRecapSaved,
                 onDismiss: onDismiss
             )
-        }.padding(.horizontal, 20)
+        }
     }
 }
 
@@ -39,6 +39,7 @@ struct WeeklyRecapSection: View {
     let container = try! ModelContainer(for: schema, configurations: [config])
 
     return WeeklyRecapSection(modelContext: container.mainContext)
+        .padding(.horizontal, 20)
         .padding(.vertical)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGray6))

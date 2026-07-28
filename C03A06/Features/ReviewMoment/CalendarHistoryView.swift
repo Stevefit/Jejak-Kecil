@@ -43,7 +43,7 @@ struct CalendarHistoryView: View {
                             dailySection
                         }
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 20)
                     .padding(.bottom, 24)
                 }
             }
@@ -220,6 +220,9 @@ struct CalendarHistoryView: View {
                         ReflectionCard(reflection: reflection, onEdit: {
                             reflectionToEdit = reflection
                         })
+                        // cancel ReflectionCard's baked-in .padding(.horizontal)
+                        // supaya padding kartu juga 20 sejajar 
+                        .padding(.horizontal, -16)
                     } else {
                         Button(action: { viewModel.showingReflectMoment = true }) {
                             HStack(spacing: 12) {
