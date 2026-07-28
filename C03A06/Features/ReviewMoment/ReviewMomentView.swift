@@ -3,6 +3,7 @@ import SwiftData
 
 struct ReviewMomentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var parents: [Parent]
     @State private var viewModel = ReviewMomentViewModel()
     @State private var navigateToCalendar = false
     @State private var showingCreateMoment = false
@@ -31,6 +32,10 @@ struct ReviewMomentView: View {
         formatter.locale = Locale(identifier: "id_ID")
         formatter.dateFormat = "d MMMM yyyy"
         return formatter.string(from: viewModel.selectedDate)
+    }
+
+    private var profileImageName: String {
+        parents.first?.parentRole == .ibu ? "Mother" : "Father"
     }
 
     var body: some View {
@@ -189,10 +194,17 @@ struct ReviewMomentView: View {
                 // Profile Button
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: ParentProfileView()) {
-                        Label("Profil", systemImage: "face.smiling.fill")
+                        Image(profileImageName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 38,height: 65)
+                            .offset(y: 10)
+                            .clipShape(Circle())
+                            .frame(width: 24, height: 24)
+                            .accessibilityLabel("Profil")
                     }
                     .buttonStyle(.glassProminent)
-                    .tint(.orange)
+                    .tint(.white)
                 }
             }
             
