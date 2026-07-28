@@ -6,7 +6,7 @@ struct CreateMomentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    @State private var viewModel = CreateMomentViewModel()
+    @State private var viewModel: CreateMomentViewModel
     
     @State private var showCancelAlert = false
     
@@ -14,6 +14,10 @@ struct CreateMomentView: View {
     @State private var showActionSheet = false
     @State private var showingImagePicker = false
     @State private var imageSourceType: UIImagePickerController.SourceType = .photoLibrary
+    
+    init(date: Date = .now) {
+        _viewModel = State(initialValue: CreateMomentViewModel(date: date))
+    }
     
     var body: some View {
         NavigationStack {

@@ -85,7 +85,7 @@ struct CalendarHistoryView: View {
             .sheet(isPresented: $viewModel.showingCreateMoment, onDismiss: {
                 viewModel.fetchDataForMonth()
             }) {
-                CreateMomentView()
+                CreateMomentView(date: viewModel.selectedDate)
             }
             .sheet(isPresented: $viewModel.showingReflectMoment, onDismiss: {
                 viewModel.fetchDataForMonth()
