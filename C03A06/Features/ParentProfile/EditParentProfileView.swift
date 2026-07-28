@@ -7,6 +7,7 @@ struct EditParentProfileView: View {
     @State private var role: ParentRole
     @State private var showDiscardConfirmation = false
 
+    private let maxNameLength = 44
     private let originalName: String
     private let originalRole: ParentRole
     let onSave: (String, ParentRole) -> Void
@@ -38,6 +39,14 @@ struct EditParentProfileView: View {
         trimmedName.isEmpty
     }
 
+    private var isNameTooLong: Bool {
+        name.count > maxNameLength
+    }
+
+    private var isSaveDisabled: Bool {
+        isNameEmpty || isNameTooLong
+    }
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
@@ -51,6 +60,12 @@ struct EditParentProfileView: View {
                         .padding(.vertical, 14)
                         .background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                    if isNameTooLong {
+                        Text("Nama maksimal \(maxNameLength) karakter.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -102,7 +117,7 @@ struct EditParentProfileView: View {
                         Label("Simpan", systemImage: "checkmark")
                     }
                     .labelStyle(.iconOnly)
-                    .disabled(isNameEmpty)
+                    .disabled(isSaveDisabled)
                 }
             }
         }
