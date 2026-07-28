@@ -271,6 +271,8 @@ final class ReflectMomentViewModel {
     // MARK: TEC-214: simpan refleksi ke database
 
     @discardableResult
+    // @MainActor karena memanggil BadgeService yang ber-@MainActor.
+    @MainActor
     func saveReflection() -> Bool {
         guard let moment = selectedMoment else {
             print("[ReflectMomentViewModel] saveReflection error: selectedMoment nil, refleksi tidak bisa disimpan")

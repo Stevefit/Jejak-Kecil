@@ -70,13 +70,8 @@
 		F0AE3F14300FD25C00D4C3B3 /* Exceptions for "C03A06" folder in "MomentWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Common/Component/BadgeCard.swift,
 				Features/AppIntents/AppModelContainer.swift,
 				Features/AppIntents/CreateMomentIntent.swift,
-				Features/ParentProfile/BadgeGridView.swift,
-				Features/ParentProfile/EditParentProfileView.swift,
-				Features/ParentProfile/ParentProfileView.swift,
-				Features/ParentProfile/ParentProfileViewModel.swift,
 				Item.swift,
 				Model/BadgeType.swift,
 				Model/EarnedBadge.swift,
@@ -535,7 +530,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kami butuh akses kamera untuk mengambil foto momenmu";
@@ -573,7 +568,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kami butuh akses kamera untuk mengambil foto momenmu";
@@ -610,7 +605,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
@@ -632,7 +627,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
@@ -653,7 +648,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = test.C03A06UITests;
@@ -673,7 +668,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = test.C03A06UITests;
@@ -695,7 +690,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MomentWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MomentWidget;
@@ -725,7 +720,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A7A3N396U2;
+				DEVELOPMENT_TEAM = AGBD4P9452;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MomentWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MomentWidget;

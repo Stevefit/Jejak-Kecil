@@ -39,6 +39,8 @@ final class CreateMomentViewModel {
     }
     
     // MARK: - Save Function (SwiftData)
+    // @MainActor karena memanggil BadgeService yang ber-@MainActor.
+    @MainActor
     func save(context: ModelContext) {
         //double check validasi sebelum menyimpan
         guard isFormValid, 

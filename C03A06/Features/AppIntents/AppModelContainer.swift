@@ -19,7 +19,7 @@ enum AppModelContainer {
             Choice.self,
             Answer.self,
             Recap.self,
-            EarnedBadge.self
+            EarnedBadge.self,
             Parent.self
         ])
 
