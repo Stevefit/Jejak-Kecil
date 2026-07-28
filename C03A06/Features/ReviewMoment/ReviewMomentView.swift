@@ -234,7 +234,7 @@ struct ReviewMomentView: View {
             .sheet(isPresented: $showingCreateMoment, onDismiss: {
                 viewModel.fetchData()
             }) {
-                CreateMomentView()
+                CreateMomentView(date: viewModel.selectedDate)
             }
             .sheet(isPresented: $showingReflectMoment, onDismiss: {
                 viewModel.fetchData()
