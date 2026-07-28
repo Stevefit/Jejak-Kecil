@@ -379,12 +379,12 @@ struct ReflectionSavedView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.35)
+            Color.black.opacity(0.7)
                 .ignoresSafeArea()
 
             ConfettiBlast()
 
-            VStack(spacing: 12) {
+            VStack(spacing: 4) {
                 Text("Refleksi Tersimpan!")
                     .font(.title.weight(.bold))
                     .foregroundStyle(.white)
@@ -396,11 +396,12 @@ struct ReflectionSavedView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
                     .scaleEffect(cardScale)
-                    .padding(.top, -24)
-                    .padding(.bottom, 8)    
+                    .padding(.top, -32)
+                    .padding(.bottom, 20)
                     .opacity(showCard ? 1 : 0)
 
                 closeButton
+                    .offset(y: -35)
                     .opacity(showButton ? 1 : 0)
                     .scaleEffect(showButton ? 1 : 0.6)
             }
