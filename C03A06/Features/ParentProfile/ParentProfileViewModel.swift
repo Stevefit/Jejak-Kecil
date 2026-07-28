@@ -12,11 +12,15 @@ class ParentProfileViewModel {
     var parent: Parent?
     var isShowingEditSheet = false
 
+    // Berapa minggu tiap lencana pernah didapat, untuk daftar lencana.
+    private(set) var badgeCounts: [BadgeType: Int] = [:]
+
     private var modelContext: ModelContext
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchParent()
+        fetchBadges()
     }
 
     func fetchParent() {
@@ -26,6 +30,10 @@ class ParentProfileViewModel {
         } catch {
             print("Failed to fetch parent: \(error)")
         }
+    }
+
+    func fetchBadges() {
+        badgeCounts = BadgeService.earnedCounts(context: modelContext)
     }
 
     /// Call once on appear in case no profile exists yet

@@ -58,6 +58,9 @@ final class CreateMomentViewModel {
         )
         
         context.insert(newMoment)
+
+        // Momen baru bisa mengubah kategori terbanyak minggu ini.
+        BadgeService(modelContext: context).evaluateAndSync(weekOf: date)
     }
 }
 

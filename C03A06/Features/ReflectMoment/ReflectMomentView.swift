@@ -10,12 +10,12 @@ import UIKit
 import SwiftData
 
 struct ReflectMomentView: View {
-
+    
     @State private var viewModel: ReflectMomentViewModel
     @State private var showCancelConfirmation = false
     let onClose: () -> Void
     let onSaved: (Reflection) -> Void
-
+    
     init(
         modelContext: ModelContext,
         date: Date = .now,
@@ -30,12 +30,12 @@ struct ReflectMomentView: View {
                 editingReflection: editingReflection
             )
         )
-
+        
         self.onClose = onClose
         self.onSaved = onSaved
     }
     // MARK: body
-
+    
     var body: some View {
         // animasi "Refleksi Tersimpan!" ditampilkan oleh ReviewMomentView (via onSaved)
         // agar background-nya adalah ReviewMomentView, bukan background sheet
@@ -46,7 +46,7 @@ struct ReflectMomentView: View {
                 }
             }
     }
-
+    
     private var reflectionFlow: some View {
         NavigationStack {
             VStack(spacing: 16) {
@@ -65,6 +65,16 @@ struct ReflectMomentView: View {
                     CloseButton {
                         showCancelConfirmation = true
                     }
+                    //MINDAHIN CONFIRM DIALOGNYA KE BUTTON
+                    .confirmationDialog(
+                        "Apakah Anda yakin ingin membatalkan refleksi ini?",
+                        isPresented: $showCancelConfirmation,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Batalkan Refleksi", role: .destructive) {
+                            onClose()
+                        }
+                    }
                 }
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 4) {
@@ -82,15 +92,7 @@ struct ReflectMomentView: View {
                     SaveButton(isEnabled: isSaveEnabled, action: handleSave)
                 }
             }
-            .confirmationDialog(
-                "Apakah Anda yakin ingin membatalkan refleksi ini?",
-                isPresented: $showCancelConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Batalkan Refleksi", role: .destructive) {
-                    onClose()
-                }
-            }
+            
             .task {
                 viewModel.seedQuestionsIfNeeded()
                 viewModel.loadQuestions()
@@ -99,13 +101,13 @@ struct ReflectMomentView: View {
             }
         }
     }
-
+    
     @ViewBuilder
     private var content: some View {
         switch viewModel.step {
         case .selectMoment:
             momentSelectionContent
-
+            
         case .question:
             GeometryReader { proxy in
                 ScrollView {
@@ -118,32 +120,32 @@ struct ReflectMomentView: View {
                     .frame(minHeight: proxy.size.height)
                 }
             }
-
+            
         case .completed:
             Spacer()
         }
     }
-
+    
     // MARK: progress bar
-
+    
     @ViewBuilder
     private var progressBar: some View {
         if progressTotal > 0 {
             StepProgressBar(current: progressCurrent, total: progressTotal)
         }
     }
-
+    
     // save hanya aktif di halaman pertanyaan terakhir dan semua wajib sudah terjawab
     private var isSaveEnabled: Bool {
         viewModel.step == .question
-            && viewModel.isLastQuestionPage
-            && viewModel.isCurrentQuestionPageComplete
+        && viewModel.isLastQuestionPage
+        && viewModel.isCurrentQuestionPageComplete
     }
-
+    
     private func handleSave() {
         viewModel.saveReflection()
     }
-
+    
     private var progressCurrent: Int {
         switch viewModel.step {
         case .selectMoment:
@@ -154,13 +156,13 @@ struct ReflectMomentView: View {
             return progressTotal
         }
     }
-
+    
     private var progressTotal: Int {
         1 + viewModel.visiblePages.count
     }
-
+    
     // MARK: bottom navigation (Selanjutnya / Kembali)
-
+    
     @ViewBuilder
     private var bottomBar: some View {
         VStack(spacing: 8) {
@@ -171,13 +173,13 @@ struct ReflectMomentView: View {
                     action: handlePrimaryTap
                 )
             }
-
+            
             if viewModel.step == .question {
                 SecondaryButton(title: "Kembali", action: viewModel.goToPreviousQuestionPage)
             }
         }
     }
-
+    
     private var showPrimaryButton: Bool {
         switch viewModel.step {
         case .selectMoment:
@@ -188,7 +190,7 @@ struct ReflectMomentView: View {
             return false
         }
     }
-
+    
     private var isPrimaryEnabled: Bool {
         switch viewModel.step {
         case .selectMoment:
@@ -199,7 +201,7 @@ struct ReflectMomentView: View {
             return false
         }
     }
-
+    
     private func handlePrimaryTap() {
         switch viewModel.step {
         case .selectMoment:
@@ -210,9 +212,9 @@ struct ReflectMomentView: View {
             break
         }
     }
-
+    
     // MARK: TEC-210: select highlighted moment for the day
-
+    
     @ViewBuilder
     private var momentSelectionContent: some View {
         if viewModel.isEmptyState {
@@ -225,23 +227,23 @@ struct ReflectMomentView: View {
             .padding(.top, 24)
         }
     }
-
+    
     // MARK: TEC-211: show all moments logged that day (grid)
-
+    
     private var momentPickerHeader: some View {
         VStack(spacing: 5) {
             Text("Pilih Momen Hari Ini")
                 .font(.title3.weight(.semibold))
-
+            
             Text("Momen mana yang mau diceritakan?")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
     }
-
+    
     private var momentGrid: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
-
+        
         return ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.moments, id: \.persistentModelID) { moment in
@@ -260,9 +262,9 @@ struct ReflectMomentView: View {
             .padding(.vertical, 4)
         }
     }
-
+    
     // MARK: TEC-213: empty state
-
+    
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "photo.on.rectangle.angled")
@@ -275,15 +277,15 @@ struct ReflectMomentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-
+    
     // MARK: TEC-214: tampilan halaman pertanyaan (baca state dari ViewModel)
-
+    
     private var questionTopGapRatio: CGFloat {
         guard viewModel.visiblePages.indices.contains(viewModel.currentQuestionIndex) else { return 0.13 }
         let count = viewModel.questions(in: viewModel.visiblePages[viewModel.currentQuestionIndex]).count
         return count >= 3 ? 0.04 : 0.13
     }
-
+    
     @ViewBuilder
     private var questionContent: some View {
         if viewModel.visiblePages.indices.contains(viewModel.currentQuestionIndex) {
@@ -298,7 +300,7 @@ struct ReflectMomentView: View {
             .padding(.bottom, 24)
         }
     }
-
+    
     // MARK: TEC-215 - TEC-222: UI input per pertanyaan
     
     @ViewBuilder
@@ -312,7 +314,7 @@ struct ReflectMomentView: View {
                     viewModel.selectChoice(choice, for: question.code)
                 }
             )
-
+            
         case .chip:
             if isCombinedPage {
                 ChipDropdownSelector(
@@ -331,7 +333,7 @@ struct ReflectMomentView: View {
                     }
                 )
             }
-
+            
         case .essay:
             EssayInput(
                 question: question,
@@ -347,30 +349,30 @@ struct ReflectMomentView: View {
 // MARK: animation save reflection
 
 struct ReflectionSavedView: View {
-
+    
     let reflection: Reflection
     let onClose: () -> Void
-
+    
     private let autoDismissSeconds: Double = 3
-
+    
     // MARK: animasi state
     @State private var showTitle = false
     @State private var showCard = false
     @State private var pulsing = false
     @State private var showButton = false
-
+    
     private var cardScale: CGFloat {
         guard showCard else { return 0.01 }
         return pulsing ? 0.80 : 0.78
     }
-
+    
     var body: some View {
         ZStack {
             Color.black.opacity(0.35)
                 .ignoresSafeArea()
-
+            
             ConfettiBlast(fireDelay: 0.22)
-
+            
             VStack(spacing: 12) {
                 Text("Refleksi Tersimpan!")
                     .font(.title.weight(.bold))
@@ -378,15 +380,15 @@ struct ReflectionSavedView: View {
                     .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
                     .opacity(showTitle ? 1 : 0)
                     .offset(y: showTitle ? 0 : -24)
-
+                
                 ReflectionCard(reflection: reflection)
                     .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
                     .scaleEffect(cardScale)
                     .padding(.top, -24)
-                    .padding(.bottom, 8)    
+                    .padding(.bottom, 8)
                     .opacity(showCard ? 1 : 0)
-
+                
                 closeButton
                     .opacity(showButton ? 1 : 0)
                     .scaleEffect(showButton ? 1 : 0.6)
@@ -398,9 +400,9 @@ struct ReflectionSavedView: View {
             onClose()
         }
     }
-
+    
     // MARK: tombol close
-
+    
     private var closeButton: some View {
         Button(action: onClose) {
             Image(systemName: "xmark")
@@ -412,9 +414,9 @@ struct ReflectionSavedView: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     // MARK: koreografi animasi
-
+    
     private func runAnimation() {
         withAnimation(.spring(response: 0.32, dampingFraction: 0.65).delay(0.05)) {
             showTitle = true
@@ -434,17 +436,17 @@ struct ReflectionSavedView: View {
 // MARK: confetti blast
 
 private struct ConfettiBlast: View {
-
+    
     var fireDelay: Double = 0
-
+    
     @State private var burst = false
     @State private var faded = false
-
+    
     private var blastScale: CGFloat {
         if faded { return 1.9 }
         return burst ? 1.4 : 0.15
     }
-
+    
     var body: some View {
         Image("Confetti")
             .resizable()
@@ -482,7 +484,7 @@ private func dummyPhotoData(color: UIColor) -> Data {
     let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
-
+    
     let moments = [
         Moment(photo: dummyPhotoData(color: .systemOrange), timestamp: .now, shortDescription: "Bermain di taman", category: .bermainBersama),
         Moment(photo: dummyPhotoData(color: .systemTeal), timestamp: .now, shortDescription: "Ngobrol sebelum tidur", category: .ngobrolDanCerita),
@@ -490,12 +492,12 @@ private func dummyPhotoData(color: UIColor) -> Data {
         Moment(photo: dummyPhotoData(color: .systemPink), timestamp: .now, shortDescription: "Masak bareng", category: .berkreasiBersama)
     ]
     moments.forEach { container.mainContext.insert($0) }
-
+    
     for question in QuestionSeeder.makeSeedQuestions() {
         container.mainContext.insert(question)
     }
     try? container.mainContext.save()
-
+    
     return Color(.systemGray5)
         .sheet(isPresented: .constant(true)) {
             ReflectMomentView(
@@ -514,7 +516,7 @@ private func dummyPhotoData(color: UIColor) -> Data {
     let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
-
+    
     ReflectMomentView(
         modelContext: container.mainContext,
         onClose: {}
@@ -528,7 +530,7 @@ private func dummyPhotoData(color: UIColor) -> Data {
     let schema = Schema([Moment.self, Reflection.self, Question.self, Choice.self, Answer.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
-
+    
     let moment = Moment(
         photo: dummyPhotoData(color: .systemOrange),
         timestamp: .now,
@@ -536,17 +538,17 @@ private func dummyPhotoData(color: UIColor) -> Data {
         category: .bermainBersama
     )
     let reflection = Reflection(date: .now, moment: moment, isCompleted: true)
-
+    
     let q4 = Question(code: "Q4", scope: .daily, answerType: .chip, text: "Perasaan?", displayOrder: 5)
     let q6 = Question(code: "Q6", scope: .daily, answerType: .essay, text: "Perbedaan?", displayOrder: 8)
     reflection.answers = [
         Answer(question: q4, selectedChip: "Hangat", reflection: reflection),
         Answer(question: q6, essayText: "Momen ini terasa hangat dan mengalir.", reflection: reflection)
     ]
-
+    
     container.mainContext.insert(moment)
     container.mainContext.insert(reflection)
-
+    
     return ReflectionSavedView(reflection: reflection, onClose: {})
         .modelContainer(container)
 }

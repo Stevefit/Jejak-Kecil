@@ -9,19 +9,19 @@ import SwiftUI
 import SwiftData
 
 struct RecapReflectionCard: View {
+
+    // MARK: - Properties
+
     let reflection: Reflection
     var isHighlighted: Bool = false
-    var onEdit: (() -> Void)? = nil
 
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMMM yyyy"
-        formatter.locale = Locale(identifier: "id_ID")
-        return formatter.string(from: reflection.date)
-    }
-    
+    // MARK: - Body
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+
+            // MARK: Photo
+
             ZStack(alignment: .bottomTrailing) {
                 GeometryReader { geometry in
                     Group {
@@ -45,6 +45,7 @@ struct RecapReflectionCard: View {
                 .frame(height: 320)
                 .cornerRadius(12)
             }
+            // MARK: Highlight Ribbon
             .overlay(alignment: .topLeading) {
                 if isHighlighted {
                     Text("Momen Paling Berkesan")
@@ -52,41 +53,33 @@ struct RecapReflectionCard: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 25)
                         .padding(.vertical, 5)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.00, green: 0.08, blue: 0.08),
-                                    Color(red: 1.00, green: 0.08, blue: 0.08),
-                                    Color(red: 1.00, green: 0.30, blue: 0.26),
-                                    Color(red: 1.00, green: 0.08, blue: 0.08)
-                                ],
-                                startPoint: .trailing,
-                                endPoint: .leading
-                            ),
-                            in: RibbonShape()
-                        )
+                        .background(Color.accentColor, in: RibbonShape())
                         .offset(x: -7, y: 14)
                 }
             }
             
+            // MARK: Text Content
+
             VStack(alignment: .leading, spacing: 12) {
                 if let category = reflection.moment?.category {
                     Text(category.rawValue)
-                        .font(.caption)
+                        .font(.caption2)
                 }
                 
                 Text(reflection.moment?.shortDescription ?? "")
-                    .font(.title3.weight(.bold))
+                    .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                     .lineLimit(2)
                 
                 let q4Answer = reflection.answers.first(where: { $0.question.code == "Q4" })
                 let q6Answer = reflection.answers.first(where: { $0.question.code == "Q6" })
                 
+                // MARK: Mood Chip (Q4)
+
                 if let chipText = q4Answer?.selectedChip {
-                    HStack(alignment: .center, spacing: 10) {
+                    HStack(alignment: .center, spacing: 16) {
                         Text(chipText)
-                            .font(.caption.weight(.medium))
+                            .font(.caption2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
                             .background(Color.yellow.opacity(0.35))
@@ -94,13 +87,15 @@ struct RecapReflectionCard: View {
                         
                         if let mood = Mood(rawValue: chipText) {
                             Text(mood.reflectionDescription)
-                                .font(.subheadline)
+                                .font(.caption2.weight(.semibold))
                                 .foregroundColor(.primary)
                                 .lineLimit(2)
                         }
                     }
                 }
                 
+                // MARK: Quote (Q6)
+
                 if let rawQuote = q6Answer?.essayText,
                    !rawQuote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     
@@ -108,7 +103,7 @@ struct RecapReflectionCard: View {
                     
                     HStack {
                         Text("“\(limitedQuote)”")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption2.weight(.semibold))
                             .foregroundColor(.primary)
                             .lineSpacing(3)
                             .lineLimit(3, reservesSpace: true)
@@ -141,10 +136,13 @@ struct RecapReflectionCard: View {
             }
         }
         .cornerRadius(12)
+        .contentShape(Rectangle())
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
+        .padding(.horizontal, 40)
     }
 }
+
+// MARK: - RibbonShape
 
 // Banner with a V-notch cut into its trailing edge.
 private struct RibbonShape: Shape {
@@ -160,6 +158,8 @@ private struct RibbonShape: Shape {
     }
 }
 
+// MARK: - Preview
+
 #Preview {
     let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -170,7 +170,7 @@ private struct RibbonShape: Shape {
     let moment = Moment(
         photo: dummyImage,
         timestamp: .now,
-        shortDescription: "Main bikin rumah-rumahan sama Lili. mencoba sesuatu yang baru",
+        shortDescription: "Main bikin rumah-rumahan sama Lili. mencoba sesuatu ya",
         category: .bermainBersama
     )
     let reflection = Reflection(date: .now, moment: moment, isCompleted: true)
@@ -180,7 +180,7 @@ private struct RibbonShape: Shape {
 
     reflection.answers = [
         Answer(question: q4, selectedChip: Mood.hangat.rawValue, reflection: reflection),
-        Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua. ", reflection: reflection)
+        Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua.Dia bilang rumahnya buat kita berdua.Dia bilang rumahnya buat kita berdua. SELESAI. ", reflection: reflection)
     ]
 
     // reflection tanpa moment & tanpa jawaban (fallback)

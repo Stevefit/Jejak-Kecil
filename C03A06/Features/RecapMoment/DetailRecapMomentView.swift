@@ -9,97 +9,126 @@ import SwiftUI
 import SwiftData
 
 struct DetailRecapMomentView: View {
-    var recap: Recap? = nil
+
+    // MARK: - Properties
+
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var viewModel: DetailRecapMomentViewModel
+
+    // MARK: - Query
 
     // Refleksi minggu ini, difilter langsung di query (bukan fetch semua lalu saring di memori).
+    // @Query harus tinggal di View — property wrapper-nya butuh siklus hidup SwiftUI.
     @Query private var weekReflections: [Reflection]
 
-    private let weekStart: Date
-    private let weekEnd: Date
+    // MARK: - Init
 
     init(recap: Recap? = nil) {
-        self.recap = recap
+        let viewModel = DetailRecapMomentViewModel(recap: recap)
+        _viewModel = State(initialValue: viewModel)
 
-        let calendar = Calendar.current
-        let range = calendar.weekRange(for: recap?.weekStart ?? .now) ?? Date()..<Date()
-        weekStart = range.lowerBound
-        weekEnd = calendar.date(byAdding: .day, value: -1, to: range.upperBound) ?? range.upperBound
-
-        let start = range.lowerBound
-        let end = range.upperBound
+        let start = viewModel.weekRange.lowerBound
+        let end = viewModel.weekRange.upperBound
         _weekReflections = Query(
             filter: #Predicate<Reflection> { $0.date >= start && $0.date < end },
             sort: \.date
         )
     }
 
-    // Nomor minggu ke berapa dalam bulannya, sama seperti penomoran di arsip.
-    private var weekNumber: Int {
-        let calendar = Calendar.current
-        guard let monthStart = calendar.dateInterval(of: .month, for: weekStart)?.start,
-              let firstWeekStart = calendar.weekRange(for: monthStart)?.lowerBound else { return 1 }
-        let weeks = calendar.dateComponents([.weekOfYear], from: firstWeekStart, to: weekStart).weekOfYear ?? 0
-        return weeks + 1
-    }
-
-    private var dateRange: String {
-        (weekStart..<weekEnd).formatted(
-            .interval.day().month(.wide).year().locale(Locale(identifier: "id_ID"))
-        )
-    }
-
-    private var highlightedIndex: Int? {
-        guard let highlighted = recap?.highlightedReflection else { return nil }
-        return weekReflections.firstIndex { $0.persistentModelID == highlighted.persistentModelID }
-    }
+    // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 16) {
+
+                // MARK: Badges
+
                 Text("Lencana Minggu Ini")
                     .font(.headline.weight(.semibold))
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 20)
 
-                // Lencana masih statis, belum di-fetch.
-                VStack(spacing: 8) {
-                    BadgeCardBig()
-                    BadgeCardBig()
+                if viewModel.badges.isEmpty {
+                    Text("Belum ada lencana di minggu ini.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(viewModel.badges, id: \.self) { badge in
+                            BadgeCardBig(badge: badge)
+                        }
+                    }
+                    .padding(.horizontal, 20)
                 }
 
-                VStack(alignment: .leading, spacing: 16) {
+                // MARK: Daily Reflections
+
+                VStack(alignment: .leading) {
                     Text("Refleksi Harian Tercatat (\(weekReflections.count))")
                         .font(.headline.weight(.semibold))
                         .padding(.horizontal, 16)
+                        .padding(.top, 4)
+                        .padding(.bottom, 20)
 
                     if weekReflections.isEmpty {
                         Text("Belum ada refleksi di minggu ini.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 20)
                     } else {
                         CardCarousel(
                             reflections: weekReflections,
-                            highlightedIndex: highlightedIndex
+                            highlightedIndex: viewModel.highlightedIndex(in: weekReflections)
                         )
 
                         Text("Geser kartu untuk melihat refleksi lainnya")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity)
+                            .padding(.top, 16)
+                            .padding(.bottom, 20)
                     }
                 }
+
+                // MARK: Weekly Habit (WQ2)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Kebiasaan yang Dijaga")
+                        .font(.headline.weight(.semibold))
+
+                    Group {
+                        if let weeklyHabit = viewModel.weeklyHabit {
+                            Text(weeklyHabit)
+                                .foregroundStyle(.primary)
+                        } else {
+                            Text("Belum ada jawaban untuk minggu ini.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.subheadline)
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+                    .padding(20)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 22))
+                }
+                .padding(.horizontal, 20)
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, 20)
         }
         .frame(maxWidth: .infinity)
         .background(Color(.systemGray6))
+        .task {
+            viewModel.loadBadges(context: modelContext)
+        }
         .navigationBarTitleDisplayMode(.inline)
+        // MARK: Toolbar Title
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
-                    Text("Ringkasan Minggu \(weekNumber)")
+                    Text("Ringkasan Minggu \(viewModel.weekNumber)")
                         .font(.headline)
-                    Text(dateRange)
+                    Text(viewModel.dateRange)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -108,8 +137,10 @@ struct DetailRecapMomentView: View {
     }
 }
 
+// MARK: - Preview
+
 #Preview {
-    let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self, Recap.self])
+    let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self, Recap.self, EarnedBadge.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
     let context = container.mainContext
@@ -140,6 +171,22 @@ struct DetailRecapMomentView: View {
     let weekStart = Calendar.current.weekRange(for: .now)?.lowerBound ?? .now
     let recap = Recap(weekStart: weekStart, highlightedReflection: reflections.first, isCompleted: true)
     context.insert(recap)
+
+    // WQ2: kebiasaan yang dijaga.
+    let wq2 = Question(
+        code: "WQ2",
+        scope: .weekly,
+        answerType: .essay,
+        text: "Apa satu hal yang terus Anda lakukan yang menciptakan momen-momen tersebut?",
+        displayOrder: 2
+    )
+    context.insert(wq2)
+    context.insert(Answer(question: wq2, essayText: "Main bikin rumah-rumahan sama Lili. mencoba sesuatu yaSelalu menyempatkan main bareng sebelum tidur, walau cuma 15 menit", recap: recap))
+
+    // Lencana minggu ini: satu dari tiap kategori, deskripsi terpendek sampai terpanjang.
+    for badge in [BadgeType.pemulaMomen, .rumahSiKecil, .semingguPenuh] {
+        context.insert(EarnedBadge(type: badge, weekStart: weekStart))
+    }
 
     return NavigationStack {
         DetailRecapMomentView(recap: recap)

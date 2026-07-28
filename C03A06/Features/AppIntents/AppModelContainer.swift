@@ -18,9 +18,10 @@ enum AppModelContainer {
             Question.self,
             Choice.self,
             Answer.self,
-            Recap.self
+            Recap.self,
+            EarnedBadge.self
         ])
-        
+
         let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let storeURL = appSupportURL.appendingPathComponent("C03A06Database.sqlite")
         

@@ -20,6 +20,14 @@ final class Reflection {
     @Relationship(deleteRule: .cascade, inverse: \Answer.reflection)
     var answers: [Answer] = []
 
+    // Sisi balik dari Recap.highlightedReflection (WQ1). Tidak dibaca kode mana pun,
+    // tapi wajib ada: tanpa inverse, SwiftData tidak tahu Recap mana yang menunjuk
+    // refleksi ini saat dihapus, dan Recap akan menyimpan rujukan ke objek mati.
+    // cascade: refleksi yang jadi sorotan hilang berarti recap mingguannya ikut
+    // hilang, jadi arsip minggu itu kembali ke kartu "Oops".
+    @Relationship(deleteRule: .cascade, inverse: \Recap.highlightedReflection)
+    var highlightedInRecap: Recap?
+
     // biar bisa isi nanti
     var isCompleted: Bool
 

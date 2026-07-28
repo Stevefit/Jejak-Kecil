@@ -73,6 +73,8 @@
 				Features/AppIntents/AppModelContainer.swift,
 				Features/AppIntents/CreateMomentIntent.swift,
 				Item.swift,
+				Model/BadgeType.swift,
+				Model/EarnedBadge.swift,
 				Model/Moment.swift,
 				Model/Question.swift,
 				Model/Recap.swift,

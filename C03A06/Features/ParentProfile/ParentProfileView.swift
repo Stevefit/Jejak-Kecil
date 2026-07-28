@@ -33,7 +33,7 @@ struct ParentProfileView: View {
                     VStack(alignment: .leading,spacing : 8){
                         Text("Daftar lencana")
                             .font(.headline)
-                        BadgeGridView()
+                        BadgeGridView(counts: viewModel.badgeCounts)
                     }
                     .padding(.horizontal, 20)
                 }
@@ -50,11 +50,15 @@ struct ParentProfileView: View {
                 }
             }
         }
-        .onAppear {
+        .task {
             if viewModel == nil {
                 let vm = ParentProfileViewModel(modelContext: modelContext)
                 vm.createParentIfNeeded()
                 viewModel = vm
+            } else {
+                // Lencana bisa bertambah saat layar ini tidak terlihat, jadi
+                // dibaca ulang tiap kali layar muncul — bukan sekali di init.
+                viewModel?.fetchBadges()
             }
         }
         .sheet(isPresented: Binding(
