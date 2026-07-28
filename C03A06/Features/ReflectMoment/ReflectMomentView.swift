@@ -13,6 +13,9 @@ struct ReflectMomentView: View {
     
     @State private var viewModel: ReflectMomentViewModel
     @State private var showCancelConfirmation = false
+    
+    private let isEditing: Bool
+
     let onClose: () -> Void
     let onSaved: (Reflection) -> Void
     
@@ -31,9 +34,12 @@ struct ReflectMomentView: View {
             )
         )
         
+
+        self.isEditing = editingReflection != nil
         self.onClose = onClose
         self.onSaved = onSaved
     }
+    
     // MARK: body
     
     var body: some View {
@@ -352,9 +358,10 @@ struct ReflectionSavedView: View {
     
     let reflection: Reflection
     let onClose: () -> Void
-    
-    private let autoDismissSeconds: Double = 3
-    
+
+    // tombol close baru muncul (dan bisa di-tap untuk menutup) setelah jeda ini
+    private let dismissEnabledAfter: Double = 3
+
     // MARK: animasi state
     @State private var showTitle = false
     @State private var showCard = false
@@ -370,9 +377,9 @@ struct ReflectionSavedView: View {
         ZStack {
             Color.black.opacity(0.35)
                 .ignoresSafeArea()
-            
-            ConfettiBlast(fireDelay: 0.22)
-            
+
+            ConfettiBlast()
+
             VStack(spacing: 12) {
                 Text("Refleksi Tersimpan!")
                     .font(.title.weight(.bold))
@@ -396,8 +403,10 @@ struct ReflectionSavedView: View {
         }
         .onAppear(perform: runAnimation)
         .task {
-            try? await Task.sleep(for: .seconds(autoDismissSeconds))
-            onClose()
+            try? await Task.sleep(for: .seconds(dismissEnabledAfter))
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                showButton = true
+            }
         }
     }
     
@@ -427,42 +436,56 @@ struct ReflectionSavedView: View {
         withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.5)) {
             pulsing = true
         }
-        withAnimation(.easeIn(duration: 0.2).delay(0.45)) {
-            showButton = true
-        }
     }
 }
 
 // MARK: confetti blast
 
 private struct ConfettiBlast: View {
-    
-    var fireDelay: Double = 0
-    
-    @State private var burst = false
-    @State private var faded = false
-    
-    private var blastScale: CGFloat {
-        if faded { return 1.9 }
-        return burst ? 1.4 : 0.15
-    }
-    
+
+    @State private var animateLeft = false
+    @State private var animateRight = false
+
     var body: some View {
-        Image("Confetti")
-            .resizable()
-            .scaledToFill()
-            .scaleEffect(blastScale)
-            .opacity(faded ? 0 : (burst ? 1 : 0))
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.13).delay(fireDelay)) {
-                    burst = true
-                }
-                withAnimation(.easeIn(duration: 0.18).delay(fireDelay + 0.13)) {
-                    faded = true
-                }
+        GeometryReader { geo in
+            ZStack {
+
+                Image("ConfettiKiri")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 170)
+                    .rotationEffect(.degrees(animateLeft ? -35 : 10))
+                    .offset(
+                        x: animateLeft ? -40 : -120,
+                        y: animateLeft ? geo.size.height + 120 : -250
+                    )
+                    .opacity(animateLeft ? 0 : 1)
+
+                Image("ConfettiKanan")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 170)
+                    .rotationEffect(.degrees(animateRight ? 35 : -10))
+                    .offset(
+                        x: animateRight ? 40 : 120,
+                        y: animateRight ? geo.size.height + 120 : -250
+                    )
+                    .opacity(animateRight ? 0 : 1)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .onAppear {
+
+            withAnimation(.easeOut(duration: 2.4)) {
+                animateLeft = true
+            }
+
+            withAnimation(.easeOut(duration: 2.4).delay(0.08)) {
+                animateRight = true
+            }
+        }
     }
 }
 

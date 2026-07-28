@@ -8,6 +8,9 @@ final class ReviewMomentViewModel {
     var moments: [Moment] = []
     var reflection: Reflection?
     var isShowingReflectionReminderOverlay = false
+    // overlay baru bisa ditutup (via tap) setelah jeda, tidak auto-dismiss
+    private var canDismissReflectionReminderOverlay = false
+
     private var weeklyRecapCompleted = false
     private var weeklyHasReflection = false
 
@@ -18,7 +21,7 @@ final class ReviewMomentViewModel {
             && weeklyHasReflection
             && !weeklyRecapCompleted
     }
-    
+
     var modelContext: ModelContext?
     private let reflectionReminderOverlayDateKey = "lastReflectionReminderOverlayDate"
     
@@ -120,14 +123,16 @@ final class ReviewMomentViewModel {
 
         UserDefaults.standard.set(todayKey, forKey: reflectionReminderOverlayDateKey)
         isShowingReflectionReminderOverlay = true
+        canDismissReflectionReminderOverlay = false
 
         Task {
-            try? await Task.sleep(for: .seconds(3))
-            dismissReflectionReminderOverlay()
+            try? await Task.sleep(for: .seconds(2))
+            canDismissReflectionReminderOverlay = true
         }
     }
 
     func dismissReflectionReminderOverlay() {
+        guard canDismissReflectionReminderOverlay else { return }
         withAnimation(.easeOut(duration: 0.3)) {
             isShowingReflectionReminderOverlay = false
         }

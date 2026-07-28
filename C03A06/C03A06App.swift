@@ -19,6 +19,7 @@ struct C03A06App: App {
             Answer.self,
             Recap.self,
             EarnedBadge.self
+            Parent.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

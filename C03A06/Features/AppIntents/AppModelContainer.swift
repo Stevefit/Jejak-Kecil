@@ -20,6 +20,7 @@ enum AppModelContainer {
             Answer.self,
             Recap.self,
             EarnedBadge.self
+            Parent.self
         ])
 
         let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
