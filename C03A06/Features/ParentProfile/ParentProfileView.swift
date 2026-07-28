@@ -11,6 +11,7 @@ import SwiftData
 struct ParentProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: ParentProfileViewModel?
+    private let maxParentNameLength = 44
     
     var body: some View {
         ZStack{
@@ -27,8 +28,9 @@ struct ParentProfileView: View {
                             .offset(y: 8)
                             .frame(width: 144, height: 144)
                             .clipShape(Circle())
-                        Text(parent.name)
+                        Text(String(parent.name.prefix(maxParentNameLength)))
                             .font(.largeTitle)
+                            .multilineTextAlignment(.center)
                         Text(parent.parentRole == .ayah ? "Ayah" : "Ibu")
                             .font(.body)
                     }
