@@ -38,53 +38,6 @@ struct ReviewMomentView: View {
             ZStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        // MARK: Header — Tanggal, Arsip, Profil
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(dayOfWeekString)
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.black)
-                                
-                                Text(dateString)
-                                    .font(.subheadline)
-                                    .foregroundColor(.black)
-                            }
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                calendarInitialTab = 1
-                                navigateToCalendar = true
-                            }) {
-                                Image(systemName: "archivebox")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.black)
-                                    .frame(width: 48, height: 48)
-                                    .background(Color.white)
-                                    .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                            }
-                            .buttonStyle(.plain)
-                            .anchorPreference(key: ArchiveAnchorKey.self, value: .bounds) { $0 }
-                            
-                            NavigationLink {
-                                ParentProfileView()
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.orange.opacity(0.2))
-                                        .frame(width: 48, height: 48)
-                                    Image(systemName: "face.smiling.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.orange)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        
                         // MARK: Ringkasan Mingguan — hanya hari Minggu & belum diisi
                         if viewModel.shouldShowWeeklyRecap {
                             WeeklyRecapSection(
@@ -208,6 +161,40 @@ struct ReviewMomentView: View {
                     .transition(.opacity)
                 }
             }
+            // MARK: Navigation Title & Toolbar Setup
+
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(dayOfWeekString)
+                            .font(.headline.weight(.semibold))
+                            .foregroundColor(.primary)
+                        Text(dateString)
+                            .font(.subheadline.weight(.regular))
+                            .foregroundColor(.primary)
+                    }
+                    .fixedSize()
+                }
+                .sharedBackgroundVisibility(.hidden)
+                // Archive Button
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Arsip", systemImage: "archivebox") {
+                        calendarInitialTab = 1
+                        navigateToCalendar = true
+                    }
+                    .buttonStyle(.plain)
+                    .anchorPreference(key: ArchiveAnchorKey.self, value: .bounds) { $0 }
+                }
+
+                // Profile Button
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(destination: ParentProfileView()) {
+                        Label("Profil", systemImage: "face.smiling.fill")
+                    }
+                    .buttonStyle(.glassProminent)
+                    .tint(.orange)
+                }
+            }
             
             // MARK: Overlay Success Recap
             .overlayPreferenceValue(ArchiveAnchorKey.self) { anchor in
@@ -328,4 +315,12 @@ struct ReviewMomentView: View {
             viewModel.dismissReflectionReminderOverlay()
         }
     }
+}
+
+#Preview {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Reflection.self, configurations: config)
+    
+    return ReviewMomentView()
+        .modelContainer(container)
 }
