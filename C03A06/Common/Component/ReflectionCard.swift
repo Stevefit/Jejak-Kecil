@@ -36,7 +36,12 @@ struct ReflectionCard: View {
                 }
                 .frame(height: 320)
                 .cornerRadius(16)
-                
+                //FIX BUG: 
+                // .clipped() cuma memotong gambar, bukan area sentuhnya. Screenshot HP
+                // rasionya tinggi, jadi hasil scaledToFill meluber jauh ke luar kartu dan
+                // memblokir tap di section lain. Ini mengunci area sentuh ke frame kartu.
+                .contentShape(Rectangle())
+
                 Button(action: {
                     onEdit?()
                 }) {

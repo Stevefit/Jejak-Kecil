@@ -24,5 +24,7 @@ struct MomentCard: View {
         }
         .aspectRatio(0.8, contentMode: .fit)
         .cornerRadius(16)
+        // Kunci area sentuh ke frame kartu — lihat catatan di ReflectionCard.
+        .contentShape(Rectangle())
     }
 }
