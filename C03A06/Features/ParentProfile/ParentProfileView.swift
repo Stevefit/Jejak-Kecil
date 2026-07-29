@@ -15,8 +15,6 @@ struct ParentProfileView: View {
     
     var body: some View {
         ZStack{
-            Color(.secondarySystemBackground)
-                .ignoresSafeArea()
             if let viewModel, let parent = viewModel.parent
             {
                 ScrollView {
@@ -51,6 +49,8 @@ struct ParentProfileView: View {
                 .scrollBounceBehavior(.basedOnSize)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .appBackground()
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar{

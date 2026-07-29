@@ -117,7 +117,7 @@ struct DetailRecapMomentView: View {
             .padding(.vertical, 20)
         }
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGray6))
+        .appBackground()
         .task {
             viewModel.loadBadges(context: modelContext)
         }
@@ -130,7 +130,7 @@ struct DetailRecapMomentView: View {
                         .font(.headline)
                     Text(viewModel.dateRange)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.black)
                 }
             }
         }

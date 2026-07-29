@@ -48,7 +48,7 @@ struct CalendarHistoryView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemGray6))
+            .appBackground()
             .navigationTitle("Arsip")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
