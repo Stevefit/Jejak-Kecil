@@ -533,6 +533,7 @@
 				DEVELOPMENT_TEAM = AGBD4P9452;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = JejakKecil;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kami butuh akses kamera untuk mengambil foto momenmu";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kami butuh akses galeri agar kamu bisa memilih foto momenmu";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -571,6 +572,7 @@
 				DEVELOPMENT_TEAM = AGBD4P9452;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = JejakKecil;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kami butuh akses kamera untuk mengambil foto momenmu";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kami butuh akses galeri agar kamu bisa memilih foto momenmu";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
