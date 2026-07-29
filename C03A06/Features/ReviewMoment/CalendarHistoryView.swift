@@ -157,15 +157,18 @@ struct CalendarHistoryView: View {
         }
     }
     
+    // Minggu tanpa refleksi sama sekali tidak ditampilkan — tidak ada yang bisa
+    // diringkas di sana, jadi ajakan mengisi ringkasan pun tidak relevan.
+    private var visibleWeeklyItems: [CalendarHistoryViewModel.WeeklyArchiveItem] {
+        viewModel.weeklyArchiveItems.filter { $0.recap != nil || $0.totalReflections > 0 }
+    }
+
     private var weeklySection: some View {
         VStack(spacing: 16) {
-            if viewModel.weeklyArchiveItems.isEmpty {
-                Text("Tidak ada minggu di bulan ini.")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .padding()
+            if visibleWeeklyItems.isEmpty {
+                emptyWeeklyState
             } else {
-                ForEach(viewModel.weeklyArchiveItems) { item in
+                ForEach(visibleWeeklyItems) { item in
                     if let recap = item.recap {
                         CompletedWeeklyCard(
                             recap: recap,
@@ -178,8 +181,10 @@ struct CalendarHistoryView: View {
                         )
                     } else {
                         WeeklyCard(
-                            title: "Oops! Tidak\nada ringkasan",
-                            subtitle: "Klik disini untuk isi\nrefleksi mingguan",
+                            title: "Oops! Tidak ada ringkasan",
+                            subtitle: "Klik disini untuk isi refleksi mingguan",
+                            dateRange: item.dateRangeString,
+                            imageName: "SmallCardRecap",
                             date: item.startDate,
                             modelContext: modelContext,
                             onRecapSaved: {
@@ -197,6 +202,25 @@ struct CalendarHistoryView: View {
         }
     }
     
+    private var emptyWeeklyState: some View {
+        VStack(spacing: 16) {
+            HalfSizeImage("EmptyRecap")
+
+            VStack(spacing: 4) {
+                Text("Belum ada momen bulan ini")
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(.black)
+
+                Text("Semua rekapmu akan muncul di sini begitu kamu mulai mencatat momen")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 100)
+    }
+
     private func showRecapSuccessOverlay() {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
