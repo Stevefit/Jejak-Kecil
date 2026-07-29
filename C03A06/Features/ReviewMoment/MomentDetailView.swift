@@ -106,10 +106,9 @@ struct MomentDetailView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 28)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemGray6))
             }
         }
-        .background(Color(.systemGray6).ignoresSafeArea())
+        .appBackground()
         .navigationTitle("Detail Momen")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

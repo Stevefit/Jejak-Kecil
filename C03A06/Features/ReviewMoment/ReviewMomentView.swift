@@ -151,7 +151,7 @@ struct ReviewMomentView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical)
                 }
-                .background(Color(.systemGray6).edgesIgnoringSafeArea(.all))
+                .appBackground()
 
                 // MARK: Overlay Pengingat Refleksi
                 if viewModel.isShowingReflectionReminderOverlay {

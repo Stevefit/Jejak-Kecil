@@ -31,7 +31,9 @@ struct WeeklyCard: View {
                     Text(title)
                         .font(.headline.weight(.semibold))
                         .multilineTextAlignment(.leading)
-                
+                        // Cuma \n di title yang boleh memutus baris, bukan wrap otomatis.
+                        .fixedSize(horizontal: true, vertical: false)
+
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(.subheadline)
@@ -60,11 +62,10 @@ struct WeeklyCard: View {
     let container = try! ModelContainer(for: schema, configurations: [config])
     
     return WeeklyCard(
-        title: "Oops! Tidak\nada ringkasan",
-        subtitle: "Klik disini untuk isi\nrefleksi mingguan",
+        title: "Klik disini untuk\nisi refleksi\nmingguan",
         modelContext: container.mainContext
     )
-    .padding(.vertical)
+    .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGray6))
         .modelContainer(container)
