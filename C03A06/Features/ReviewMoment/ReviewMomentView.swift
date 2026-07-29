@@ -197,7 +197,7 @@ struct ReviewMomentView: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: 38,height: 65)
-                            .offset(y: 10)
+                            .offset(y: 17)
                             .clipShape(Circle())
                             .frame(width: 24, height: 24)
                             .accessibilityLabel("Profil")
