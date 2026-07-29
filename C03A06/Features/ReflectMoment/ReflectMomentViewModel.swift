@@ -307,6 +307,10 @@ final class ReflectMomentViewModel {
 
         do {
             try modelContext.save()
+
+            // Jawaban Q1-Q3 baru bisa mengubah lencana pola refleksi minggu ini.
+            BadgeService(modelContext: modelContext).evaluateAndSync(weekOf: reflection.date)
+
             savedReflection = reflection
             step = .completed
             return true

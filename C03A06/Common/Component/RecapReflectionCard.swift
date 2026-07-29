@@ -1,19 +1,27 @@
+//
+//  RecapReflectionCard.swift
+//  C03A06
+//
+//  Created by Deny Wahyudi Asaloei  on 27/07/26.
+//
+
 import SwiftUI
 import SwiftData
 
-struct ReflectionCard: View {
+struct RecapReflectionCard: View {
+
+    // MARK: - Properties
+
     let reflection: Reflection
-    var onEdit: (() -> Void)? = nil
-    
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMMM yyyy"
-        formatter.locale = Locale(identifier: "id_ID")
-        return formatter.string(from: reflection.date)
-    }
-    
+    var isHighlighted: Bool = false
+
+    // MARK: - Body
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+
+            // MARK: Photo
+
             ZStack(alignment: .bottomTrailing) {
                 GeometryReader { geometry in
                     Group {
@@ -35,28 +43,23 @@ struct ReflectionCard: View {
                     }
                 }
                 .frame(height: 320)
-                .cornerRadius(16)
-                //FIX BUG: 
-                // .clipped() cuma memotong gambar, bukan area sentuhnya. Screenshot HP
-                // rasionya tinggi, jadi hasil scaledToFill meluber jauh ke luar kartu dan
-                // memblokir tap di section lain. Ini mengunci area sentuh ke frame kartu.
-                .contentShape(Rectangle())
-
-                Button(action: {
-                    onEdit?()
-                }) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.black)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                .cornerRadius(12)
+            }
+            // MARK: Highlight Ribbon
+            .overlay(alignment: .topLeading) {
+                if isHighlighted {
+                    Text("Momen Paling Berkesan")
+                        .font(.subheadline.weight(.bold).italic())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 25)
+                        .padding(.vertical, 5)
+                        .background(Color.accentColor, in: RibbonShape())
+                        .offset(x: -7, y: 14)
                 }
-                .buttonStyle(.plain)
-                .padding(14)
             }
             
+            // MARK: Text Content
+
             VStack(alignment: .leading, spacing: 12) {
                 if let category = reflection.moment?.category {
                     Text(category.rawValue)
@@ -71,8 +74,10 @@ struct ReflectionCard: View {
                 let q4Answer = reflection.answers.first(where: { $0.question.code == "Q4" })
                 let q6Answer = reflection.answers.first(where: { $0.question.code == "Q6" })
                 
+                // MARK: Mood Chip (Q4)
+
                 if let chipText = q4Answer?.selectedChip {
-                    HStack(alignment: .center, spacing: 10) {
+                    HStack(alignment: .center, spacing: 16) {
                         Text(chipText)
                             .font(.caption2)
                             .padding(.horizontal, 14)
@@ -89,6 +94,8 @@ struct ReflectionCard: View {
                     }
                 }
                 
+                // MARK: Quote (Q6)
+
                 if let rawQuote = q6Answer?.essayText,
                    !rawQuote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     
@@ -117,12 +124,41 @@ struct ReflectionCard: View {
         }
         .padding(7)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .cornerRadius(24)
+        .background {
+            if isHighlighted {
+                LinearGradient(
+                    colors: [Color(red: 0.75, green: 0.76, blue: 0.97), .white],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            } else {
+                Color.white
+            }
+        }
+        .cornerRadius(12)
+        .contentShape(Rectangle())
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
+        .padding(.horizontal, 40)
     }
 }
+
+// MARK: - RibbonShape
+
+// Banner with a V-notch cut into its trailing edge.
+private struct RibbonShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: .zero)
+            path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+            path.addLine(to: CGPoint(x: rect.maxX - 16, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+            path.closeSubpath()
+        }
+    }
+}
+
+// MARK: - Preview
 
 #Preview {
     let schema = Schema([Moment.self, Reflection.self, Answer.self, Question.self, Choice.self])
@@ -144,7 +180,7 @@ struct ReflectionCard: View {
 
     reflection.answers = [
         Answer(question: q4, selectedChip: Mood.hangat.rawValue, reflection: reflection),
-        Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua. Dia bilang rumahnya buat kita berdua. SELESAI.", reflection: reflection)
+        Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua.Dia bilang rumahnya buat kita berdua.Dia bilang rumahnya buat kita berdua. SELESAI. ", reflection: reflection)
     ]
 
     // reflection tanpa moment & tanpa jawaban (fallback)
@@ -156,8 +192,9 @@ struct ReflectionCard: View {
 
     return ScrollView {
         VStack(spacing: 16) {
-            ReflectionCard(reflection: reflection, onEdit: { print("edit") })
-            ReflectionCard(reflection: empty)
+            RecapReflectionCard(reflection: reflection, isHighlighted: true)
+            RecapReflectionCard(reflection: reflection)
+            RecapReflectionCard(reflection: empty)
         }
         .padding(.vertical)
     }

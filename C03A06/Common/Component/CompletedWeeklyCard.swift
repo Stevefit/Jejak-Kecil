@@ -16,12 +16,23 @@ struct CompletedWeeklyCard: View {
     
     // Dipanggil saat card ditekan (misal untuk navigasi ke detail arsip)
     var action: () -> Void = {}
-    
+
+    // Menghapus momen ikut menghapus refleksi dan recap-nya. Kartu ini bisa
+    // sempat dirender dengan objek yang sudah mati sebelum daftarnya di-fetch
+    // ulang, dan membaca propertinya saat itu akan crash.
+    private var highlightedReflection: Reflection? {
+        guard !recap.isDeleted,
+              let reflection = recap.highlightedReflection,
+              !reflection.isDeleted
+        else { return nil }
+        return reflection
+    }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 0) {
                 // MARK: Foto Sampul (Menempel di kiri penuh)
-                if let photoData = recap.highlightedReflection?.moment?.photo, let uiImage = UIImage(data: photoData) {
+                if let photoData = highlightedReflection?.moment?.photo, let uiImage = UIImage(data: photoData) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()

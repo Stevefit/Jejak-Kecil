@@ -58,12 +58,14 @@ struct ReviewMomentView: View {
                                 Text("Refleksi Hari Ini")
                                     .font(.headline.weight(.semibold))
                                     .foregroundColor(.black)
-                                    .padding(.horizontal)
-                                
+
                                 if let reflection = viewModel.reflection {
                                     ReflectionCard(reflection: reflection, onEdit: {
                                         reflectionToEdit = reflection
                                     })
+                                    // cancel ReflectionCard's baked-in .padding(.horizontal)
+                                    // supaya padding kartu juga 20 sejajar 
+                                    .padding(.horizontal, -16)
                                 } else {
                                     Button(action: { showingReflectMoment = true }) {
                                         VStack(spacing: 16) {
@@ -87,7 +89,6 @@ struct ReviewMomentView: View {
                                         .padding(.vertical, 28)
                                         .background(Color.white)
                                         .cornerRadius(24)
-                                        .padding(.horizontal)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -99,8 +100,7 @@ struct ReviewMomentView: View {
                             Text("Momen Hari Ini\(viewModel.moments.isEmpty ? "" : " (\(viewModel.moments.count))")")
                                 .font(.headline.weight(.semibold))
                                 .foregroundColor(.black)
-                                .padding(.horizontal)
-                            
+
                             if viewModel.moments.isEmpty {
                                 Button(action: { showingCreateMoment = true }) {
                                     VStack(spacing: 16) {
@@ -124,7 +124,6 @@ struct ReviewMomentView: View {
                                     .padding(.vertical, 28)
                                     .background(Color.white)
                                     .cornerRadius(24)
-                                    .padding(.horizontal)
                                 }
                                 .buttonStyle(.plain)
                             } else {
@@ -146,13 +145,13 @@ struct ReviewMomentView: View {
                                             .aspectRatio(0.8, contentMode: .fit)
                                     }
                                 }
-                                .padding(.horizontal)
                             }
                         }
                     }
+                    .padding(.horizontal, 20)
                     .padding(.vertical)
                 }
-                .background(Color(.systemGray6).edgesIgnoringSafeArea(.all))
+                .appBackground()
 
                 // MARK: Overlay Pengingat Refleksi
                 if viewModel.isShowingReflectionReminderOverlay {
@@ -198,7 +197,7 @@ struct ReviewMomentView: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: 38,height: 65)
-                            .offset(y: 10)
+                            .offset(y: 17)
                             .clipShape(Circle())
                             .frame(width: 24, height: 24)
                             .accessibilityLabel("Profil")

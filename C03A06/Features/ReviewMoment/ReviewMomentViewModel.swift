@@ -85,21 +85,30 @@ final class ReviewMomentViewModel {
     
     func updateMoment(_ moment: Moment, withDescription description: String, date: Date, photoData: Data?) {
         guard let context = modelContext else { return }
-        
+
+        // Tanggal bisa berpindah minggu, jadi minggu lama ikut dievaluasi ulang.
+        let previousDate = moment.timestamp
+
         moment.shortDescription = description
         moment.timestamp = date
         if let photoData {
             moment.photo = photoData
         }
-        
+
         try? context.save()
+        BadgeService(modelContext: context).evaluateAndSync(weeksOf: [previousDate, date])
         fetchData()
     }
 
     func deleteMoment(_ moment: Moment) {
         guard let context = modelContext else { return }
+
+        // Ambil sebelum dihapus — setelah delete, timestamp tidak bisa dibaca lagi.
+        let momentDate = moment.timestamp
+
         context.delete(moment)
         try? context.save()
+        BadgeService(modelContext: context).evaluateAndSync(weekOf: momentDate)
         fetchData()
     }
 
