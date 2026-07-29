@@ -36,10 +36,7 @@ struct ReflectionCard: View {
                 }
                 .frame(height: 320)
                 .cornerRadius(16)
-                //FIX BUG: 
-                // .clipped() cuma memotong gambar, bukan area sentuhnya. Screenshot HP
-                // rasionya tinggi, jadi hasil scaledToFill meluber jauh ke luar kartu dan
-                // memblokir tap di section lain. Ini mengunci area sentuh ke frame kartu.
+                // FIX BUG: Lock touch area to card frame
                 .contentShape(Rectangle())
 
                 Button(action: {
@@ -84,7 +81,7 @@ struct ReflectionCard: View {
                             Text(mood.reflectionDescription)
                                 .font(.caption2.weight(.semibold))
                                 .foregroundColor(.primary)
-                                .lineLimit(2)
+                                .lineLimit(6)
                         }
                     }
                 }
@@ -121,6 +118,7 @@ struct ReflectionCard: View {
         .cornerRadius(24)
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
 
