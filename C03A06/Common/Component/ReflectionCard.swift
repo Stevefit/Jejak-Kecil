@@ -36,7 +36,7 @@ struct ReflectionCard: View {
                 }
                 .frame(height: 320)
                 .cornerRadius(16)
-                // FIX BUG: Lock touch area to card frame
+                // Lock touch area to card frame
                 .contentShape(Rectangle())
 
                 Button(action: {
@@ -106,10 +106,12 @@ struct ReflectionCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.systemGray6).opacity(0.7))
                     .cornerRadius(16)
+                    .padding(.horizontal, -10)
                     .padding(.top, 4)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, 21)
+            .padding(.trailing, 22)
             .padding(.bottom, 14)
         }
         .padding(7)
@@ -145,7 +147,6 @@ struct ReflectionCard: View {
         Answer(question: q6, essayText: "Dia bilang rumahnya buat kita berdua. Dia bilang rumahnya buat kita berdua. SELESAI.", reflection: reflection)
     ]
 
-    // reflection tanpa moment & tanpa jawaban (fallback)
     let empty = Reflection(date: .now, moment: nil, isCompleted: false)
 
     container.mainContext.insert(moment)

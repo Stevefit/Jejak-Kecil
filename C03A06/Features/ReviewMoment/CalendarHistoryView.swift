@@ -1,5 +1,46 @@
 import SwiftUI
 import SwiftData
+import UIKit
+
+struct NativeSegmentedPicker: UIViewRepresentable {
+    @Binding var selection: Int
+    let items: [String]
+
+    func makeUIView(context: Context) -> UISegmentedControl {
+        let segmentedControl = UISegmentedControl(items: items)
+        segmentedControl.selectedSegmentIndex = selection
+        segmentedControl.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.valueChanged(_:)),
+            for: .valueChanged
+        )
+        return segmentedControl
+    }
+
+    func updateUIView(_ uiView: UISegmentedControl, context: Context) {
+        uiView.selectedSegmentIndex = selection
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject {
+        var parent: NativeSegmentedPicker
+
+        init(_ parent: NativeSegmentedPicker) {
+            self.parent = parent
+        }
+
+        @objc func valueChanged(_ sender: UISegmentedControl) {
+            parent.selection = sender.selectedSegmentIndex
+        }
+    }
+    
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UISegmentedControl, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? uiView.intrinsicContentSize.width, height: 48)
+    }
+}
 
 struct CalendarHistoryView: View {
     @Environment(\.dismiss) private var dismiss
@@ -22,13 +63,10 @@ struct CalendarHistoryView: View {
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 16) {
-                Picker("", selection: $viewModel.selectedTab) {
-                    Text("Mingguan").tag(0)
-                    Text("Harian").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                NativeSegmentedPicker(selection: $viewModel.selectedTab, items: ["Mingguan", "Harian"])
+                    .frame(height: 48)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
                 
                 DatePickerLabel(title: viewModel.formattedMonthYear) {
                     viewModel.showingDatePicker = true
@@ -160,8 +198,6 @@ struct CalendarHistoryView: View {
         }
     }
     
-    // Minggu tanpa refleksi sama sekali tidak ditampilkan — tidak ada yang bisa
-    // diringkas di sana, jadi ajakan mengisi ringkasan pun tidak relevan.
     private var visibleWeeklyItems: [CalendarHistoryViewModel.WeeklyArchiveItem] {
         viewModel.weeklyArchiveItems.filter { $0.recap != nil || $0.totalReflections > 0 }
     }
@@ -247,8 +283,6 @@ struct CalendarHistoryView: View {
                         ReflectionCard(reflection: reflection, onEdit: {
                             reflectionToEdit = reflection
                         })
-                        // cancel ReflectionCard's baked-in .padding(.horizontal)
-                        // supaya padding kartu juga 20 sejajar 
                         .padding(.horizontal, -16)
                     } else {
                         Button(action: { viewModel.showingReflectMoment = true }) {
@@ -257,6 +291,8 @@ struct CalendarHistoryView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 193.88, height: 137.77)
+                                    .scaleEffect(0.95)
+                                    .offset(y: 4)
                                 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Oops! Tidak ada refleksi")
@@ -328,6 +364,8 @@ struct CalendarHistoryView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 193.88, height: 137.77)
+                                .scaleEffect(0.95)
+                                .offset(y: 4)
                             
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Oops! Tidak ada momen")
@@ -392,21 +430,21 @@ struct CalendarHistoryView: View {
                             }) {
                                 ZStack {
                                     Circle()
-                                        .fill(isSelected ? Color.blue.opacity(0.15) : Color(.systemGray5))
+                                        .fill(Color(.systemGray5))
                                         .frame(width: 42, height: 42)
-                                    
-                                    if isSelected {
-                                        Circle()
-                                            .stroke(Color.blue, lineWidth: 2)
-                                            .frame(width: 42, height: 42)
-                                    }
                                     
                                     if let imageData = dayMomentImage, let uiImage = UIImage(data: imageData) {
                                         Image(uiImage: uiImage)
                                             .resizable()
                                             .scaledToFill()
-                                            .frame(width: 40, height: 40)
+                                            .frame(width: 42, height: 42)
                                             .clipShape(Circle())
+                                    }
+                                    
+                                    if isSelected {
+                                        Circle()
+                                            .fill(Color.yellow.opacity(0.5))
+                                            .frame(width: 42, height: 42)
                                     }
                                     
                                     Text("\(dayNumber)")
@@ -420,12 +458,12 @@ struct CalendarHistoryView: View {
                             
                             Circle()
                                 .fill(hasReflection ? Color.accentColor : Color.clear)
-                                .frame(width: 11, height: 11)
+                                .frame(width: 10, height: 10)
                         }
                         .opacity(isFuture ? 0.35 : 1.0)
                     } else {
                         Color.clear
-                            .frame(height: 52)
+                            .frame(height: 56)
                     }
                 }
             }

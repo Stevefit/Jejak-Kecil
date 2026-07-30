@@ -58,7 +58,6 @@ struct MomentDetailView: View {
                                     .padding(12)
                                     .background(Color.white)
                                     .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.1), radius: 4)
                             }
                         }
                         
@@ -72,7 +71,6 @@ struct MomentDetailView: View {
                                     .padding(12)
                                     .background(Color.white)
                                     .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.1), radius: 4)
                             }
                         }
                     }
@@ -107,6 +105,7 @@ struct MomentDetailView: View {
                 .padding(.top, 28)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.top, 19)
         }
         .appBackground()
         .navigationTitle("Detail Momen")
@@ -117,12 +116,14 @@ struct MomentDetailView: View {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
                 }
+                .buttonStyle(.plain)
             }
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: { isEditing = true }) {
                     Image(systemName: "pencil")
                 }
+                .buttonStyle(.plain)
             }
         }
         .sheet(isPresented: $isEditing, onDismiss: {
