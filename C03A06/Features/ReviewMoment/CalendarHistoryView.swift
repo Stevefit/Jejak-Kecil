@@ -33,7 +33,10 @@ struct CalendarHistoryView: View {
                 DatePickerLabel(title: viewModel.formattedMonthYear) {
                     viewModel.showingDatePicker = true
                 }
-                .padding(.horizontal, 16)
+                // Sejajar dengan isi ScrollView di bawahnya, tetap 20 dari tepi
+                // layar apa pun panjang nama bulannya.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -207,7 +210,7 @@ struct CalendarHistoryView: View {
             HalfSizeImage("EmptyRecap")
 
             VStack(spacing: 4) {
-                Text("Belum ada momen bulan ini")
+                Text("Belum ada refleksi bulan ini")
                     .font(.title3.weight(.semibold))
                     .foregroundColor(.black)
 
