@@ -20,13 +20,18 @@ struct ParentProfileView: View {
                 ScrollView {
                     VStack {
                         VStack(spacing: 4) {
-                            Image(parent.parentRole == .ayah ? "Father" : "Mother")
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 144, height: 144)
+                                Image(parent.parentRole == .ayah ? "Father" : "Mother")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 90, height: 155)
-                                .offset(y: 8)
+                                .offset(y: 15)
                                 .frame(width: 144, height: 144)
-                                .clipShape(Circle())
+                                    .clipShape(Circle())
+                            }
                             Text(String(parent.name.prefix(maxParentNameLength)))
                                 .font(.largeTitle)
                                 .multilineTextAlignment(.center)
@@ -68,7 +73,7 @@ struct ParentProfileView: View {
         }
       
         .transaction(value: viewModel?.selectedBadge) { $0.disablesAnimations = true }
-        .navigationTitle("Profile")
+        .navigationTitle("Profil")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar{
             ToolbarItem(placement: .navigationBarTrailing){
