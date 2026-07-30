@@ -69,7 +69,7 @@ struct EditParentProfileView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Role")
+                    Text("Peran")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
 
@@ -97,7 +97,7 @@ struct EditParentProfileView: View {
             .padding(.horizontal, 20)
             .padding(.top, 24)
             .background(Color(.secondarySystemBackground))
-            .navigationTitle("Edit Profile")
+            .navigationTitle("Ubah Profil")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
