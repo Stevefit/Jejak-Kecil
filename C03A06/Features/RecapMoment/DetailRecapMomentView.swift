@@ -44,16 +44,12 @@ struct DetailRecapMomentView: View {
 
                 // MARK: Badges
 
-                Text("Lencana Minggu Ini")
-                    .font(.headline.weight(.semibold))
-                    .padding(.horizontal, 20)
-
-                if viewModel.badges.isEmpty {
-                    Text("Belum ada lencana di minggu ini.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                // Tanpa lencana, seluruh bagian ini disembunyikan — termasuk judulnya.
+                if !viewModel.badges.isEmpty {
+                    Text("Lencana Minggu Ini")
+                        .font(.headline.weight(.semibold))
                         .padding(.horizontal, 20)
-                } else {
+
                     VStack(spacing: 8) {
                         ForEach(viewModel.badges, id: \.self) { badge in
                             BadgeCardBig(badge: badge)

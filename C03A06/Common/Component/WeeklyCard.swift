@@ -11,8 +11,12 @@ import SwiftData
 struct WeeklyCard: View {
     let title: String
     var subtitle: String? = nil
+    // Rentang tanggal minggu tersebut. nil = tidak ditampilkan.
+    var dateRange: String? = nil
+    // Versi arsip pakai ilustrasi yang lebih kecil.
+    var imageName: String = "CardRecap"
     var date: Date = .now
-    
+
     let modelContext: ModelContext
     // Dipanggil setelah Recap berhasil disimpan (untuk memicu overlay sukses).
     var onRecapSaved: () -> Void = {}
@@ -24,15 +28,21 @@ struct WeeklyCard: View {
     var body: some View {
         Button(action: { showingRecap = true }) {
             HStack(spacing: 13) {
-                HalfSizeImage("CardRecap")
+                HalfSizeImage(imageName)
                     .padding(.leading, 23)
-                
-                VStack(alignment: .leading, spacing: 8){
+
+                VStack(alignment: .leading, spacing: 4){
                     Text(title)
                         .font(.headline.weight(.semibold))
                         .multilineTextAlignment(.leading)
                         // Cuma \n di title yang boleh memutus baris, bukan wrap otomatis.
                         .fixedSize(horizontal: true, vertical: false)
+
+                    if let dateRange {
+                        Text(dateRange)
+                            .font(.caption.weight(.medium))
+                            .padding(.bottom, 6)
+                    }
 
                     if let subtitle = subtitle {
                         Text(subtitle)
@@ -40,13 +50,18 @@ struct WeeklyCard: View {
                             .multilineTextAlignment(.leading)
                     }
                 }
+                .padding(.vertical, 12)
                 .foregroundColor(.black)
                 
                 Spacer()
             }
+            // Disamakan dengan CompletedWeeklyCard supaya semua kartu di arsip
+            // mingguan setinggi 140, apa pun ukuran ilustrasinya.
+            .frame(height: 140)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+        .buttonStyle(.plain)
 //        .padding(.horizontal, 20)
         .sheet(isPresented: $showingRecap, onDismiss: onDismiss) {
             RecapMomentView(modelContext: modelContext, date: date, onSaved: onRecapSaved)

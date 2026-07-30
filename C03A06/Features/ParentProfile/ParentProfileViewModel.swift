@@ -12,6 +12,9 @@ class ParentProfileViewModel {
     var parent: Parent?
     var isShowingEditSheet = false
 
+    // Lencana yang detailnya sedang dibuka. Nil berarti overlay tertutup.
+    var selectedBadge: BadgeType?
+
     // Berapa minggu tiap lencana pernah didapat, untuk daftar lencana.
     private(set) var badgeCounts: [BadgeType: Int] = [:]
 
