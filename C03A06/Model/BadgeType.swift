@@ -87,3 +87,7 @@ enum BadgeType: String, CaseIterable, Sendable {
     // Untuk lencana yang belum didapat.
     static let lockedImageName = "BadgeKosong"
 }
+
+extension BadgeType: Identifiable {
+    var id: String { rawValue }
+}

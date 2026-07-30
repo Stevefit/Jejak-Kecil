@@ -14,6 +14,9 @@ struct BadgeGridView: View {
     // berarti belum pernah didapat dan tampil dalam versi kosong.
     let counts: [BadgeType: Int]
 
+    // Dipanggil saat satu kartu ditap, untuk membuka detailnya.
+    let onSelect: (BadgeType) -> Void
+
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
 
     // MARK: - Computed Properties
@@ -32,7 +35,13 @@ struct BadgeGridView: View {
         // Ketujuh lencana selalu tampil, supaya user tahu apa yang bisa dikejar.
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(orderedBadges, id: \.self) { badge in
-                BadgeCard(badge: badge, timesEarned: counts[badge] ?? 0)
+                Button {
+                    onSelect(badge)
+                } label: {
+                    BadgeCard(badge: badge, timesEarned: counts[badge] ?? 0)
+                }
+                // Kartunya sudah punya gaya sendiri, jadi tombol tidak ikut mewarnai.
+                .buttonStyle(.plain)
             }
         }
     }
@@ -43,7 +52,7 @@ struct BadgeGridView: View {
 #Preview {
     ScrollView {
         // pemulaMomen ada di urutan kelima katalog, tapi harus naik ke baris atas.
-        BadgeGridView(counts: [.hadirPenuh: 1, .pemulaMomen: 12])
+        BadgeGridView(counts: [.hadirPenuh: 1, .pemulaMomen: 12], onSelect: { _ in })
             .padding()
     }
     .background(Color(.systemGray6))
