@@ -37,20 +37,17 @@ struct BadgeService {
             predicate: #Predicate { $0.weekStart == start }
         )
 
-        // Momen paling awal milik user, untuk lencana Pemula Momen. Dibatasi 1 baris
-        // supaya tidak menarik seluruh tabel hanya demi tanggal terkecil.
-        var firstMomentFetch = FetchDescriptor<Moment>(
-            sortBy: [SortDescriptor(\.timestamp, order: .forward)]
-        )
-        firstMomentFetch.fetchLimit = 1
-
         do {
             let moments = try modelContext.fetch(momentFetch)
             let reflections = try modelContext.fetch(reflectionFetch)
             let existing = try modelContext.fetch(existingFetch)
 
-            let firstMomentDate = try modelContext.fetch(firstMomentFetch).first?.timestamp
-            let containsFirstMoment = firstMomentDate.map(week.contains) ?? false
+            // Pemula Momen dipatok sekali seumur pemakaian. Tidak dihitung dari
+            // momen bertanggal paling awal — momen bisa dibuat dengan tanggal
+            // lampau lewat Arsip, dan itu tidak boleh memindahkan lencananya ke
+            // minggu lampau tersebut. Jadi: diberikan ke minggu pertama yang
+            // punya momen saat dievaluasi, lalu dibiarkan di sana.
+            let containsFirstMoment = try !moments.isEmpty && !hasFirstMomentBadge()
 
             let deserved = BadgeEvaluator.evaluate(
                 moments: moments,
@@ -61,8 +58,9 @@ struct BadgeService {
             let alreadyStored = Set(existing.compactMap(\.type))
 
             // Cabut yang tidak lagi memenuhi syarat (termasuk baris rusak yang
-            // rawType-nya tidak dikenali lagi).
-            for badge in existing where badge.type.map({ !deserved.contains($0) }) ?? true {
+            // rawType-nya tidak dikenali lagi). Pemula Momen dikecualikan: sudah
+            // didapat berarti tetap milik minggu itu.
+            for badge in existing where badge.type.map({ $0 != .pemulaMomen && !deserved.contains($0) }) ?? true {
                 modelContext.delete(badge)
             }
 
@@ -71,9 +69,32 @@ struct BadgeService {
                 modelContext.insert(EarnedBadge(type: type, weekStart: start))
             }
 
+            // Data lama bisa punya lebih dari satu Pemula Momen dari aturan
+            // sebelumnya, jadi dirapikan di sini.
+            try keepOnlyEarliestFirstMomentBadge()
+
             try modelContext.save()
         } catch {
             print("[BadgeService] evaluateAndSync error: \(error)")
+        }
+    }
+
+    private static func firstMomentBadgeDescriptor() -> FetchDescriptor<EarnedBadge> {
+        let rawType = BadgeType.pemulaMomen.rawValue
+        return FetchDescriptor<EarnedBadge>(
+            predicate: #Predicate { $0.rawType == rawType },
+            sortBy: [SortDescriptor(\.earnedAt, order: .forward)]
+        )
+    }
+
+    private func hasFirstMomentBadge() throws -> Bool {
+        try modelContext.fetchCount(Self.firstMomentBadgeDescriptor()) > 0
+    }
+
+    // Yang paling dulu didapat dipertahankan, salinan berikutnya dibuang.
+    private func keepOnlyEarliestFirstMomentBadge() throws {
+        for badge in try modelContext.fetch(Self.firstMomentBadgeDescriptor()).dropFirst() {
+            modelContext.delete(badge)
         }
     }
 

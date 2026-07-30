@@ -24,8 +24,9 @@ enum BadgeEvaluator {
     ///   - moments: momen di minggu yang dievaluasi.
     ///   - reflections: refleksi selesai di minggu yang dievaluasi.
     ///   - weekRange: rentang minggu itu, dipakai memetakan momen ke hari.
-    ///   - containsFirstMoment: apakah momen paling awal milik user jatuh di minggu ini.
-    ///     Ditentukan pemanggil karena butuh data di luar minggu ini.
+    ///   - containsFirstMoment: apakah minggu ini yang berhak atas lencana Pemula
+    ///     Momen. Ditentukan pemanggil karena butuh data di luar minggu ini —
+    ///     termasuk apakah lencananya sudah pernah didapat.
     static func evaluate(
         moments: [Moment],
         reflections: [Reflection],
@@ -53,7 +54,7 @@ enum BadgeEvaluator {
     ) -> Set<BadgeType> {
         var earned: Set<BadgeType> = []
 
-        // Melekat pada minggu yang memuat momen paling awal, jadi didapat sekali saja.
+        // Sekali seumur pemakaian — pemanggil yang menjaga agar tidak berpindah minggu.
         if containsFirstMoment {
             earned.insert(.pemulaMomen)
         }
