@@ -84,7 +84,7 @@ struct ImageCropperView: View {
                 .aspectRatio(3/4, contentMode: .fit)
                 .padding(.horizontal, 16)
 
-                Text("Seret dan jepit foto untuk menyesuaikan bagian 3:4")
+                Text("Geser dan perbesar foto untuk menyesuaikan bagian 3:4")
                     .font(.headline)
                     .foregroundColor(.black)
                     .multilineTextAlignment(.center)
