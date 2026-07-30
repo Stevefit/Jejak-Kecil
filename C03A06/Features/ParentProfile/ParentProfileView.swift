@@ -39,18 +39,35 @@ struct ParentProfileView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Daftar lencana")
                                 .font(.headline)
-                            BadgeGridView(counts: viewModel.badgeCounts)
+                            BadgeGridView(counts: viewModel.badgeCounts) { badge in
+                                viewModel.selectedBadge = badge
+                            }
                         }
                         .padding(.horizontal, 20)
                     }
                     .padding(.vertical, 20)
                 }
-                // Tidak memantul kalau isinya sudah muat di layar.
+               
                 .scrollBounceBehavior(.basedOnSize)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .appBackground()
+  
+        .fullScreenCover(item: Binding(
+            get: { viewModel?.selectedBadge },
+            set: { viewModel?.selectedBadge = $0 }
+        )) { badge in
+            DetailBadgeView(
+                badge: badge,
+                timesEarned: viewModel?.badgeCounts[badge] ?? 0,
+                onClose: { viewModel?.selectedBadge = nil }
+            )
+           
+            .presentationBackground(.clear)
+        }
+      
+        .transaction(value: viewModel?.selectedBadge) { $0.disablesAnimations = true }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar{
@@ -68,8 +85,7 @@ struct ParentProfileView: View {
                 vm.createParentIfNeeded()
                 viewModel = vm
             } else {
-                // Lencana bisa bertambah saat layar ini tidak terlihat, jadi
-                // dibaca ulang tiap kali layar muncul — bukan sekali di init.
+               
                 viewModel?.fetchBadges()
             }
         }
