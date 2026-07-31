@@ -29,6 +29,7 @@ struct BadgeCard: View {
                 // Tinggi dikunci, lebar mengikuti rasio asli artwork (~638x804).
                 .scaledToFit()
                 .frame(height: 99)
+                .opacity(isLocked ? 0.5 : 1)
                 .accessibilityHidden(true)
 
             Text(badge.title)

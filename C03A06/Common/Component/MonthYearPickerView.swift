@@ -21,7 +21,7 @@ struct MonthYearPickerView: View {
     }
 
     private var years: [Int] {
-        Array(2020...currentYear)
+        Array(1900...currentYear)
     }
 
     private var availableMonthsCount: Int {

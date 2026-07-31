@@ -45,8 +45,8 @@ struct SelectableReflectionCard: View {
                 .foregroundColor(.black)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .frame(height: 48, alignment: .topLeading)
+                .frame(maxWidth: .infinity, minHeight: 48, maxHeight: 48, alignment: .topLeading)
+                .padding(.horizontal, 4)
         }
         .padding(6)
         .frame(width: 172, height: 234, alignment: .top)
@@ -74,7 +74,7 @@ struct SelectableReflectionCard: View {
     let moment = Moment(
         photo: dummyImage,
         timestamp: .now,
-        shortDescription: "Main bikin rumah-rumahan sama Lili. mencoba sesuatu yang baru",
+        shortDescription: "12345 123 123 123 123 123 123 123 123 123 123 13 13 12",
         category: .bermainBersama
     )
     let reflection = Reflection(date: .now, moment: moment, isCompleted: true)

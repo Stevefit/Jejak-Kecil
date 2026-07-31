@@ -63,7 +63,7 @@ struct DetailRecapMomentView: View {
                 VStack(alignment: .leading) {
                     Text("Refleksi Harian Tercatat (\(weekReflections.count))")
                         .font(.headline.weight(.semibold))
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 20)
                         .padding(.top, 4)
                         .padding(.bottom, 20)
 
@@ -123,10 +123,9 @@ struct DetailRecapMomentView: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
                     Text("Ringkasan Minggu \(viewModel.weekNumber)")
-                        .font(.headline)
+                        .font(.headline.weight(.semibold))
                     Text(viewModel.dateRange)
-                        .font(.subheadline)
-                        .foregroundStyle(.black)
+                        .font(.subheadline.weight(.regular))
                 }
             }
         }
