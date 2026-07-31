@@ -401,6 +401,7 @@ struct ReflectionSavedView: View {
                     .opacity(showButton ? 1 : 0)
                     .scaleEffect(showButton ? 1 : 0.6)
             }
+            .padding(.top, 60)
         }
         .onAppear(perform: runAnimation)
         .task {
