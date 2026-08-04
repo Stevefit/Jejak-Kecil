@@ -46,15 +46,10 @@ struct SuccessOverlay: View {
             .contentShape(Rectangle())
             .onTapGesture { onSecondaryAction() }
 
-            // MARK: Lubang sorotan bisa ditap
-            if let rect = highlightRect {
-                Button(action: onPrimaryAction) {
-                    Circle().fill(.clear).contentShape(Circle())
-                }
-                .frame(width: rect.width, height: rect.height)
-                .position(x: rect.midX, y: rect.midY)
-                
-                // MARK: Panah sorotan (hanya muncul jika ada highlightRect)
+            // MARK: Panah sorotan (hanya muncul jika ada highlightRect)
+            // Lubangnya tidak perlu tombol sendiri: toolbar digambar di atas
+            // overlay, jadi tap di lubang langsung mengenai tombol Arsip asli.
+            if highlightRect != nil {
                 archiveHighlight
             }
             

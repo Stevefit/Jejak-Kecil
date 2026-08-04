@@ -158,12 +158,14 @@ struct ReviewMomentView: View {
                     reflectionReminderOverlay
                 }
 
-                if let reflection = savedReflectionForAnimation {
-                    ReflectionSavedView(reflection: reflection, onClose: {
-                        withAnimation { savedReflectionForAnimation = nil }
-                    })
-                    .transition(.opacity)
-                }
+            }
+            // Overlay refleksi tersimpan: disajikan sebagai cover berlatar bening
+            // supaya menimpa navigation bar, bukan menyembunyikannya.
+            .fullScreenCover(item: $savedReflectionForAnimation) { reflection in
+                ReflectionSavedView(reflection: reflection, onClose: {
+                    withoutAnimation { savedReflectionForAnimation = nil }
+                })
+                .presentationBackground(.clear)
             }
             // MARK: Navigation Title & Toolbar Setup
 
@@ -181,16 +183,20 @@ struct ReviewMomentView: View {
                 }
                 .sharedBackgroundVisibility(.hidden)
                 // Archive Button
+                // Toolbar digambar di atas SuccessOverlay, jadi tombol ini yang
+                // menerima tap saat overlay tampil — arahkan ke tab Mingguan (0).
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Arsip", systemImage: "archivebox") {
-                        calendarInitialTab = 1
+                        calendarInitialTab = showSuccessOverlay ? 0 : 1
+                        showSuccessOverlay = false
                         navigateToCalendar = true
                     }
                     .buttonStyle(.plain)
                     .anchorPreference(key: ArchiveAnchorKey.self, value: .bounds) { $0 }
                 }
 
-                // Profile Button
+                // Profile Button — saat overlay: disamarkan, bukan dihapus, biar
+                // tombol Arsip tidak bergeser ke tepi.
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: ParentProfileView()) {
                         Image(profileImageName)
@@ -205,7 +211,12 @@ struct ReviewMomentView: View {
                     }
                     .buttonStyle(.glassProminent)
                     .tint(.white)
+                    .opacity(showSuccessOverlay ? 0 : 1)
+                    .disabled(showSuccessOverlay)
                 }
+                // Kapsul glass toolbar digambar di luar tombol, jadi opacity saja
+                // tidak cukup — matikan latarnya saat overlay.
+                .sharedBackgroundVisibility(showSuccessOverlay ? .hidden : .automatic)
             }
             
             // MARK: Overlay Success Recap
@@ -281,9 +292,7 @@ struct ReviewMomentView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
             viewModel.fetchData()
-            withAnimation(.easeIn(duration: 0.2)) {
-                savedReflectionForAnimation = reflection
-            }
+            withoutAnimation { savedReflectionForAnimation = reflection }
         }
     }
     

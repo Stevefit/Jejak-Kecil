@@ -156,13 +156,6 @@ struct CalendarHistoryView: View {
                 )
             }
             
-            if let reflection = savedReflectionForAnimation {
-                ReflectionSavedView(reflection: reflection, onClose: {
-                    withAnimation { savedReflectionForAnimation = nil }
-                })
-                .transition(.opacity)
-            }
-            
             if showSuccessOverlay {
                 SuccessOverlay(
                     title: "Yay, refleksi\nmingguanmu tersimpan!",
@@ -186,15 +179,20 @@ struct CalendarHistoryView: View {
         .navigationDestination(item: $recapToNavigate) { recap in
             DetailRecapMomentView(recap: recap)
         }
+        // Cover berlatar bening: overlay menimpa navigation bar, tak menghapusnya.
+        .fullScreenCover(item: $savedReflectionForAnimation) { reflection in
+            ReflectionSavedView(reflection: reflection, onClose: {
+                withoutAnimation { savedReflectionForAnimation = nil }
+            })
+            .presentationBackground(.clear)
+        }
     }
     
     private func showSavedAnimation(for reflection: Reflection) {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.45))
             viewModel.fetchDataForMonth()
-            withAnimation(.easeIn(duration: 0.2)) {
-                savedReflectionForAnimation = reflection
-            }
+            withoutAnimation { savedReflectionForAnimation = reflection }
         }
     }
     

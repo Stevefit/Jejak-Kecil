@@ -6,6 +6,15 @@
 //
 
 import Foundation
+import SwiftUI
+
+/// Ubah state tanpa animasi bawaan — mis. agar fullScreenCover muncul di tempat,
+/// bukan menggeser dari bawah.
+func withoutAnimation(_ body: () -> Void) {
+    var transaction = Transaction()
+    transaction.disablesAnimations = true
+    withTransaction(transaction, body)
+}
 
 extension Calendar {
     /// Rentang setengah terbuka [awal hari, awal hari berikutnya) untuk
